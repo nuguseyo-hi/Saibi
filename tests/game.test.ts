@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { parseScenario, getNextNode } from '../src/domain/scenario.ts';
 import { createGameStore } from '../src/store/gameStore.ts';
 
-const data = JSON.parse(readFileSync(new URL('../src/content/scenarios/intro.json', import.meta.url), 'utf8'));
+const data = JSON.parse(readFileSync(new URL('./fixtures/legacy-intro.json', import.meta.url), 'utf8'));
 const scenario = parseScenario(data);
 
 test('JSON content and local placeholder paths are valid', () => {

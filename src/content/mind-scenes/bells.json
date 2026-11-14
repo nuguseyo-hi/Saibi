@@ -1,0 +1,172 @@
+[
+  {
+    "id": "elin_bells",
+    "characterId": "elin",
+    "title": "종소리의 잔향",
+    "description": "기억의 문장이 드러난다. 빛나는 단어와 문장을 선택해 그 의미를 바꾸어라.",
+    "originalText": "그날 밤 내가 들었던 종소리는 우연이었을 것이다.\n그 종소리를 다시 듣는 것이 두렵다.\n나는 우연이라는 말을 여러 번 되뇌었다.",
+    "sentences": [
+      {
+        "id": "bell_sentence",
+        "segments": [
+          {
+            "id": "bell_prefix",
+            "text": "그날 밤 내가 들었던 종소리는 "
+          },
+          {
+            "id": "bell_word",
+            "text": "우연이었"
+          },
+          {
+            "id": "bell_suffix",
+            "text": "을 것이다."
+          }
+        ]
+      },
+      {
+        "id": "fear_sentence",
+        "segments": [
+          {
+            "id": "fear_text",
+            "text": "그 종소리를 다시 듣는 것이 두렵다."
+          }
+        ]
+      },
+      {
+        "id": "echo_sentence",
+        "segments": [
+          {
+            "id": "echo_text",
+            "text": "나는 우연이라는 말을 여러 번 되뇌었다."
+          }
+        ]
+      }
+    ],
+    "regions": [
+      {
+        "id": "bell_meaning",
+        "type": "replace",
+        "targetId": "bell_word",
+        "originalText": "우연이었",
+        "defaultOptionId": "coincidence",
+        "options": [
+          {
+            "id": "coincidence",
+            "label": "우연",
+            "text": "우연이었",
+            "resultId": "bells_coincidence",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellCoincidence",
+                "value": true
+              },
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellRevelation",
+                "value": false
+              },
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellIllusion",
+                "value": false
+              }
+            ]
+          },
+          {
+            "id": "revelation",
+            "label": "계시",
+            "text": "계시였",
+            "resultId": "bells_revelation",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellCoincidence",
+                "value": false
+              },
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellRevelation",
+                "value": true
+              },
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellIllusion",
+                "value": false
+              }
+            ]
+          },
+          {
+            "id": "illusion",
+            "label": "착각",
+            "text": "착각이었",
+            "resultId": "bells_illusion",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellCoincidence",
+                "value": false
+              },
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellRevelation",
+                "value": false
+              },
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "bellIllusion",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fear_memory",
+        "type": "delete",
+        "targetId": "fear_sentence",
+        "originalText": "그 종소리를 다시 듣는 것이 두렵다.",
+        "defaultOptionId": "keep",
+        "options": [
+          {
+            "id": "keep",
+            "label": "문장 유지",
+            "text": "그 종소리를 다시 듣는 것이 두렵다.",
+            "resultId": "fear_retained",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "fearDeleted",
+                "value": false
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "label": "문장 삭제",
+            "text": "",
+            "resultId": "fear_erased",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "elin",
+                "key": "fearDeleted",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

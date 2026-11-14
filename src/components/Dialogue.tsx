@@ -11,7 +11,7 @@ export function DialogueBox({ node, speaker, onNext }: { node: DialogueNode; spe
   return <div className="dialogue-panel">
     <div className="speaker"><span className="speaker-line" />{speaker}<span className="speaker-caption">{node.speaker === 'narrator' ? 'NARRATION' : 'DIALOGUE'}</span></div>
     <p className="dialogue-text" key={node.id} aria-live="polite">{node.text}</p>
-    <div className="dialogue-bottom"><span>{node.choices ? '당신의 대답을 선택하세요' : node.ending ? '첫 만남의 기록이 남았습니다' : '대화창을 클릭하거나 Enter 키로 진행'}</span>{node.next && <button className="next-button" onClick={onNext} aria-label="다음 대사">다음 <span aria-hidden="true">◇</span></button>}</div>
+    <div className="dialogue-bottom"><span>{node.choices ? '당신의 대답을 선택하세요' : node.ending ? '고해성사의 기록이 남았습니다' : node.mindEventId ? '다음으로 진행하면 정신 침투가 시작됩니다' : '대화창을 클릭하거나 Enter 키로 진행'}</span>{node.next && <button className="next-button" onClick={onNext} aria-label={node.mindEventId ? '정신 침투 시작' : '다음 대사'}>{node.mindEventId ? '정신 침투' : '다음'} <span aria-hidden="true">◇</span></button>}</div>
     {node.next && <button className="dialogue-hitarea" aria-label="대화창 클릭하여 다음 대사" onClick={onNext} tabIndex={-1} />}
   </div>;
 }

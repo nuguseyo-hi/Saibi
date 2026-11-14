@@ -2,9 +2,50 @@
 
 상태: 전체 아키텍처 설계 제안. React, TypeScript, Vite, Tailwind CSS, Zustand, JSON 시나리오, localStorage 및 서버 없는 싱글플레이는 전체 프로젝트 요구사항이다. 후속 요청으로 타이틀·대화 초기 구현을 추가했다. 아래는 미래 확장을 포함한 제안이며 모든 구조가 현재 구현된 것은 아니다.
 
-## 현재 구현과 설계의 차이
+## 현재 구현 — 고해성사·사고 편집
 
-현재 React 19, Vite 7, TypeScript 5.9, Tailwind CSS 4의 Vite 플러그인, Zustand 5를 사용한다. 정확한 설치 버전은 package-lock.json에 고정한다. `src/domain/scenario.ts`는 최소 데이터 계약과 참조 검증, `src/store/gameStore.ts`는 실행 상태, `src/components/`는 화면 구성, `src/content/scenarios/intro.json`은 임시 콘텐츠를 담당한다. 현재는 노드가 `next`, `choices`, `ending` 중 하나를 갖는 단순 계약이며 조건·효과·사고 편집 노드 타입은 구현하지 않았다. 캐릭터는 같은 시나리오 JSON의 characters 배열로 관리한다. 저장·수치 정책은 정하지 않았으며 해당 기능도 없다. 아래 구조와 JSON 예시는 장기 설계 자료이며 현재 로더에 그대로 넣는 데이터는 아니다.
+실제 작업 저장소는 `/workspace/sites/vespers-play`이며 사이트 프로젝트 ID는 `.openai/hosting.json`에 있다. React 19, Vite 7, TypeScript 5.9, Tailwind CSS 4, Zustand 5를 유지한다. 추가 런타임 의존성은 없다.
+
+| 파일 | 책임 |
+| --- | --- |
+| `src/domain/scenario.ts` | 대화/자동 분기 검증, 노드 해석, 고해성사·편집 진입 계약 |
+| `src/domain/flags.ts` | 등록된 캐릭터별 불리언 플래그 조건과 setFlag 효과 |
+| `src/domain/mind/editing.ts` | 독립적인 편집 데이터 검증, 초안 생성, ID 기반 결과 계산 |
+| `src/domain/progress.ts` | 저장 가능한 진행·편집 세션·로그 타입 |
+| `src/domain/validation.ts` | JSON 검증 공통 함수 |
+| `src/store/gameStore.ts` | 진행 전이, 원자적 확정, 중복 확정 방지, 취소·이어하기 |
+| `src/services/storage.ts` | 버전 envelope, localStorage 예외 처리, 저장 데이터·참조 검증 |
+| `src/screens/MindEditScreen.tsx` | 초안만 보유하는 정신 침투 화면 |
+| `src/components/MemoryRecord.tsx` | 확정된 기억과 원문 비교 |
+| `src/content/scenarios/intro.json` | 방문·고해성사·후속 대화 및 선택 효과·플래그 분기 |
+| `src/content/mind-scenes/bells.json` | 사고 편집 이벤트, 문장·구간·옵션·결과 ID와 효과 |
+
+### 실제 대화 계약
+
+기존 노드는 그대로 사용할 수 있다. `type` 생략 또는 `dialogue`인 노드는 기존 `next / choices / ending` 중 하나를 갖는다. `presentation: confession`은 고해성사 표시를 정한다. `mindEventId`가 있는 대화 노드에서 진행하면 정신 침투로 전환하고, 확정하면 해당 노드의 `next`로 이동한다. 취소는 같은 진입 대화 노드로 복귀한다.
+
+선택지의 `effects`는 `setFlag(characterId, key, value)` 배열이다. 캐릭터의 `flagKeys`에 등록한 키만 허용한다. `type: branch` 노드는 `branches[{condition, next}]`와 필수 `fallbackNext`를 가진다. 현재 조건은 `flag(characterId, key, equals)`이며 첫 번째 참 조건이 우선이다. 자동 분기 순환을 검증 시 거부한다.
+
+### 실제 편집 계약
+
+이벤트는 `id, characterId, title, description, originalText, sentences, regions`를 갖는다. 문장은 `id, segments[{id,text}]`로 나눈다. 각 region은 `id, type, targetId, originalText, defaultOptionId, options`를 갖는다.
+
+- `replace`는 segment ID를 대상으로 한다. 옵션에는 `id, label, text, resultId, effects`가 있다. `label`은 선택어(계시), `text`는 문장에 삽입할 활용형(계시였)이다. 단순 문자열 전체 치환이나 자동 조사 추론을 사용하지 않는다.
+- `delete`는 sentence ID를 대상으로 한다. 유지 옵션의 text는 원문, 삭제 옵션의 text는 빈 문자열이다. 편집 중에는 취소선 흔적을 표시하고 결과의 sentences/afterText에서는 삭제 문장을 제외한다. beforeText는 비교용 원문으로 보존한다.
+- 각 구간의 옵션들은 동일한 플래그 집합을 명시적으로 true/false 설정한다. 다른 구간과 효과 키 충돌, 다른 캐릭터에 대한 효과, 중첩 편집 대상을 거부한다.
+- 원문·계시·착각은 각각 `bells_coincidence / bells_revelation / bells_illusion`, 문장 유지·삭제는 `fear_retained / fear_erased`다. 이벤트별 결과 ID는 유일하다.
+
+### 실행 상태와 저장
+
+`screen, nodeId, activeCharacterId, characterFlags, editResults, log, activeMind, revision`을 관리한다. `activeMind`에는 session ID, event ID, sourceNodeId가 있다. 편집 초안은 MindEditScreen의 useState에만 존재한다. 확정 액션이 세션·옵션을 재검증하고, 결과/효과/후속 위치를 한 번에 계산해 갱신한다. 오래된 세션 입력과 중복 확정을 무시한다.
+
+localStorage 키는 `nyarlathotep-vn.save.v1`. envelope는 `schemaVersion: 1`, `contentVersion: confession-1`, scenarioId, savedAt, state다. 이전 공개 버전에는 저장 기능이 없어 이전 세이브 마이그레이션은 없다. 지원하지 않는 버전·손상 데이터는 보존하고 이어하기를 막는다. 새 게임으로 교체하기 전 UI에서 확인한다.
+
+새로고침 시 마지막 저장 화면을 자동 복원한다. 편집 화면은 세션만 복원하고 원문 초안을 새로 만든다. 타이틀 이동은 진행 체크포인트를 덮어쓰지 않으며 이어하기로 복귀한다. 쓰기 실패는 메모리 내 진행을 보존하고 재시도 버튼을 제공한다. 저장 성공 전에는 성공 안내를 하지 않는다. 저장소와 origin은 브라우저별로 독립적이다. 여러 탭의 동시 플레이 병합은 지원하지 않는다.
+
+### 초기 설계와의 차이
+
+아래 장기 구조 및 죄책감 JSON은 초기 설계 자료다. 현재 로더에 그대로 넣을 수 있는 예제는 실제 `src/content/` JSON이다. stats, 개인 루트, AND/OR 조건, 별도 결과 화면, 다중 엔딩은 아직 구현하지 않았다.
 
 ## 1. 기술 선택
 
@@ -18,11 +59,11 @@
 | JSON | 캐릭터 정의, 시나리오, 사고 편집 | 실행 함수·임의 JavaScript를 포함하지 않는다. |
 | localStorage | 로컬 세이브 | JSON 직렬화 가능한 게임 상태만 저장한다. |
 
-구현 시점에 호환되는 안정 버전을 선택하고 lockfile에 고정한다. Tailwind와 Vite 연결 방법은 선택한 버전의 공식 방식으로 확인한다. 현재 패키지 설치나 버전 고정은 하지 않는다. 초기에는 라우터, 별도 게임 엔진, 대형 상태 머신, 추가 검증 라이브러리 없이 시작하는 방식을 제안한다. URL을 게임 진행 상태로 사용하지 않는다.
+구현 시점에 호환되는 안정 버전을 선택하고 lockfile에 고정한다. Tailwind와 Vite 연결 방법은 선택한 버전의 공식 방식으로 확인한다. 초기 구현 패키지와 버전은 package-lock.json에 고정되어 있다. 초기에는 라우터, 별도 게임 엔진, 대형 상태 머신, 추가 검증 라이브러리 없이 시작하는 방식을 제안한다. URL을 게임 진행 상태로 사용하지 않는다.
 
 ## 2. 제안 폴더 구조
 
-아래는 **향후 구현 구조**다. 이번 단계의 실제 생성 대상은 네 개의 Markdown 문서뿐이다.
+아래는 **향후 구현 구조**다. 현재 구현 파일은 위의 표를 참고한다.
 
 ```text
 project/
@@ -180,7 +221,7 @@ speaker는 characterId 또는 `narrator`, `player` 같은 예약 ID를 사용한
 
 ## 6. JSON 예시 — 모두 임시 콘텐츠
 
-아래 블록은 각각 유효한 JSON이며 제안 계약을 설명한다. 실제 `.json` 파일은 아직 만들지 않는다. 0~100 범위, 한 건 편집, 대사, 효과, 엔딩은 승인된 게임 규칙이 아니다.
+아래 블록은 각각 유효한 JSON이며 제안 계약을 설명한다. 이 절은 초기 제안 예시이며 현재 실제 콘텐츠는 별도 JSON 파일에서 관리한다. 0~100 범위, 한 건 편집, 대사, 효과, 엔딩은 승인된 게임 규칙이 아니다.
 
 ### 6.1 캐릭터 정의
 

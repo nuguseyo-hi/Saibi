@@ -1,0 +1,25 @@
+{
+  "id": "church_intro",
+  "title": "검은 기도",
+  "subtitle": "VESPERS",
+  "chapter": "제1장 · 문을 두드리는 자",
+  "location": "이름 없는 교회",
+  "background": "/assets/backgrounds/church.svg",
+  "startNodeId": "arrival",
+  "characters": [
+    { "id": "elin", "name": "엘린", "description": "길 잃은 방문자", "standing": "/assets/characters/elin.svg" }
+  ],
+  "nodes": [
+    { "id": "arrival", "speaker": "narrator", "text": "마지막 종소리가 사라진 뒤에도, 교회의 문은 열려 있었다. 빗소리 사이로 조심스러운 발걸음이 들려온다.", "next": "greeting" },
+    { "id": "greeting", "speaker": "elin", "characterId": "elin", "text": "…아직 문을 닫지 않으셨네요. 잠시 들어가 있어도 될까요?", "next": "welcome" },
+    { "id": "welcome", "speaker": "player", "characterId": "elin", "text": "물론입니다. 이곳에서는 누구도 서둘러 떠날 필요가 없어요.", "next": "question" },
+    { "id": "question", "speaker": "elin", "characterId": "elin", "text": "이상하죠. 처음 온 곳인데… 오래전부터 이 문을 알고 있었던 것 같아요.", "choices": [
+      { "id": "comfort", "text": "비를 피하고 싶었던 것뿐일 거예요. 편히 쉬세요.", "next": "comfort_reply" },
+      { "id": "curiosity", "text": "문 너머에서 무엇이 당신을 부르던가요?", "next": "curiosity_reply" }
+    ] },
+    { "id": "comfort_reply", "speaker": "elin", "characterId": "elin", "text": "그렇게 말씀해 주시니 마음이 놓여요. 오늘은… 아무것도 묻지 않는 사람이 필요했나 봐요.", "next": "comfort_end" },
+    { "id": "comfort_end", "speaker": "narrator", "characterId": "elin", "text": "엘린은 젖은 망토를 여미고 촛불 곁에 앉았다. 두 사람 사이에, 처음으로 편안한 침묵이 내려앉았다.", "ending": "작은 안식" },
+    { "id": "curiosity_reply", "speaker": "elin", "characterId": "elin", "text": "제 이름이요. 아무에게도 말하지 않았는데… 누군가 제 이름을 불렀어요. 당신도 들으셨나요?", "next": "curiosity_end" },
+    { "id": "curiosity_end", "speaker": "narrator", "characterId": "elin", "text": "대답 대신 촛불이 기울었다. 닫힌 문 너머에서, 아주 오래된 목소리가 다시 한 번 그녀의 이름을 불렀다.", "ending": "문 너머의 목소리" }
+  ]
+}
