@@ -21,6 +21,7 @@ export default function App() {
   const game = useStore(gameStore);
   const [showLog, setShowLog] = useState(false);
   const [showMemory, setShowMemory] = useState(false);
+  const [confirmNewGame, setConfirmNewGame] = useState(false);
   const node = getDialogue(scenario, game.nodeId);
   const mindEvent = mindEvents.find(e => e.id === game.activeMind?.eventId);
   const isConfession = node.presentation === 'confession';
@@ -38,7 +39,7 @@ export default function App() {
   const toTitle = () => { setShowLog(false); setShowMemory(false); game.returnToTitle(); };
 
   const newGame = () => {
-    if ((game.checkpoint || game.saveError) && !window.confirm('새 게임을 시작하면 기존 저장이 교체됩니다. 계속할까요?')) return;
+    if (game.checkpoint || game.saveError) { setConfirmNewGame(true); return; }
     game.start();
   };
 
@@ -56,8 +57,11 @@ export default function App() {
       <h1 id="game-title">{scenario.title}</h1>
       <p className="title-english">{scenario.subtitle}</p>
       <p className="title-description">모든 기도에는, 귀 기울이는 존재가 있다.</p>
-      <button className="start-button" onClick={newGame}><span aria-hidden="true">✧</span>{game.checkpoint ? '새 게임' : '게임 시작'}<span aria-hidden="true">→</span></button>
-      {game.checkpoint && <button className="continue-button" onClick={game.resume}>이어서 플레이 →</button>}
+      {confirmNewGame ? <div className="new-game-confirm" role="group" aria-labelledby="new-game-question">
+        <p id="new-game-question">기존 저장을 교체하고 처음부터 시작할까요?</p>
+        <div><button className="secondary-button" onClick={() => setConfirmNewGame(false)} autoFocus>취소</button><button className="primary-button" onClick={() => { setConfirmNewGame(false); game.start(); }}>새 게임 시작</button></div>
+      </div> : <button className="start-button" onClick={newGame}><span aria-hidden="true">✧</span>{game.checkpoint ? '새 게임' : '게임 시작'}<span aria-hidden="true">→</span></button>}
+      {game.checkpoint && !confirmNewGame && <button className="continue-button" onClick={game.resume}>이어서 플레이 →</button>}
       <p className="title-note">문을 열고, 첫 번째 방문자를 맞이하세요.</p>
     </section> : game.screen === 'mindEdit' && mindEvent && game.activeMind ? <MindEditScreen key={game.activeMind.id} event={mindEvent} characterName={speakerName(mindEvent.characterId)} error={game.actionError} confirm={draft => game.confirmEdit(game.activeMind!.id, draft)} cancel={() => game.cancelEdit(game.activeMind!.id)} /> : <section className="novel-screen" aria-label="비주얼노벨 대화">
       <div className="location"><span className="location-dot" /><div><span className="eyebrow">{isConfession ? 'CONFESSION' : 'SANCTUARY'}</span><p>{isConfession ? '고해성사' : scenario.location}</p></div></div>
