@@ -10,11 +10,16 @@ import { parseMindEvents } from './domain/mind/editing';
 import { createSavePort } from './services/storage';
 import { MindEditScreen } from './screens/MindEditScreen';
 import { MemoryRecord } from './components/MemoryRecord';
+import dungeonData from './content/dungeons/emilia.json';
+import { canEnter, initialInfiltration, parseDungeon } from './dungeon/model';
+import { DungeonScreen, DungeonOutcome } from './screens/DungeonScreen';
 
 // Parse once at the content boundary, before creating any runtime state.
 const scenario = parseScenario(scenarioData);
 const mindEvents = parseMindEvents(mindData, scenario);
-const gameStore = createGameStore(scenario, mindEvents, createSavePort(() => window.localStorage, scenario, mindEvents));
+const dungeon = parseDungeon(dungeonData);
+if (!scenario.nodes.some(n => n.id === dungeon.sourceNodeId) || !scenario.nodes.some(n => n.id === dungeon.successNext) || !mindEvents.some(e => e.id === dungeon.coreEventId && e.characterId === dungeon.characterId)) throw new Error('던전과 시나리오 연결 오류');
+const gameStore = createGameStore(scenario, mindEvents, createSavePort(() => window.localStorage, scenario, mindEvents, dungeon), { dungeon, development: import.meta.env.DEV });
 const speakerName = (id: string) => id === 'narrator' ? '이야기' : id === 'player' ? '당신' : scenario.characters.find(c => c.id === id)?.name ?? id;
 
 export default function App() {
@@ -26,6 +31,9 @@ export default function App() {
   const mindEvent = mindEvents.find(e => e.id === game.activeMind?.eventId);
   const isConfession = node.presentation === 'confession';
   const character = scenario.characters.find(c => c.id === node.characterId);
+  const infiltration = game.infiltration[dungeon.characterId] ?? initialInfiltration(dungeon);
+  const isDungeonEntry = node.id === dungeon.sourceNodeId;
+  const entryAllowed = !isDungeonEntry || canEnter(dungeon, infiltration);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (showLog || showMemory || game.screen !== 'dialogue' || event.repeat || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -43,7 +51,7 @@ export default function App() {
     game.start();
   };
 
-  return <main className={`game-viewport ${game.screen === 'title' ? 'is-title' : game.screen === 'mindEdit' ? 'is-mind' : 'is-dialogue'} ${isConfession ? 'is-confession' : ''}`}>
+  return <main className={`game-viewport ${game.screen === 'title' ? 'is-title' : game.screen === 'dungeon' ? 'is-dungeon' : game.screen === 'dungeonResult' ? 'is-dungeon-result' : game.screen === 'mindEdit' ? 'is-mind' : 'is-dialogue'} ${isConfession ? 'is-confession' : ''}`}>
     <BackgroundLayer src={scenario.background} />
     <div className="vignette" aria-hidden="true" />
     <div className="grain" aria-hidden="true" />
@@ -62,14 +70,20 @@ export default function App() {
         <div><button className="secondary-button" onClick={() => setConfirmNewGame(false)} autoFocus>취소</button><button className="primary-button" onClick={() => { setConfirmNewGame(false); game.start(); }}>새 게임 시작</button></div>
       </div> : <button className="start-button" onClick={newGame}><span aria-hidden="true">✧</span>{game.checkpoint ? '새 게임' : '게임 시작'}<span aria-hidden="true">→</span></button>}
       {game.checkpoint && !confirmNewGame && <button className="continue-button" onClick={game.resume}>이어서 플레이 →</button>}
+{import.meta.env.DEV && !confirmNewGame && <button className="dev-dungeon-button" onClick={game.debugDungeon}>DEV · 심상던전 직접 입장 (테스트 진행 초기화)</button>}
       <p className="title-note">문을 열고, 첫 번째 방문자를 맞이하세요.</p>
-    </section> : game.screen === 'mindEdit' && mindEvent && game.activeMind ? <MindEditScreen key={game.activeMind.id} event={mindEvent} characterName={speakerName(mindEvent.characterId)} error={game.actionError} confirm={draft => game.confirmEdit(game.activeMind!.id, draft)} cancel={() => game.cancelEdit(game.activeMind!.id)} /> : <section className="novel-screen" aria-label="비주얼노벨 대화">
+    </section> : game.screen === 'dungeon' && game.dungeon ? <DungeonScreen data={dungeon} progress={game.dungeon} actions={{
+      read: () => gameStore.getState().dungeon!, checkpoint: game.checkpointDungeon, inspect: game.inspectDungeon, travel: game.travelDungeon,
+      solve: game.solveDungeonPuzzle, settle: game.settleDungeonDoors, hit: game.dungeonHit, core: game.openDungeonCore, retreat: game.retreatDungeon,
+    }} /> : game.screen === 'dungeonResult' && game.dungeon ? <DungeonOutcome data={dungeon} progress={game.dungeon} finish={game.finishDungeon} /> : game.screen === 'mindEdit' && mindEvent && game.activeMind ? <MindEditScreen key={game.activeMind.id} event={mindEvent} characterName={speakerName(mindEvent.characterId)} error={game.actionError} confirm={draft => game.confirmEdit(game.activeMind!.id, draft)} cancel={() => game.cancelEdit(game.activeMind!.id)} /> : <section className="novel-screen" aria-label="비주얼노벨 대화">
       <div className="location"><span className="location-dot" /><div><span className="eyebrow">{isConfession ? 'CONFESSION' : 'SANCTUARY'}</span><p>{isConfession ? '고해성사' : scenario.location}</p></div></div>
       {character && <CharacterSprite key={character.id} character={character} />}
       <div className="dialogue-area">
+        {isDungeonEntry && <div className="infiltration-status"><span>제 {infiltration.night} 밤 · 경계도 {infiltration.guard} / 진입 기준 {dungeon.rules.maxGuard} 이하 · 침투 {infiltration.attempts}/{dungeon.rules.maxAttempts}</span>{infiltration.attempts > 0 && <button onClick={game.nextNight}>다음 밤에 다시 만나기 →</button>}{!entryAllowed && <p>오늘은 더 침투할 수 없습니다. 다음 밤에는 경계도와 침투 기회가 회복됩니다.</p>}</div>}
+        {game.actionError && <p className="action-error" role="alert">{game.actionError}</p>}
         {node.choices && <ChoiceList choices={node.choices} choose={id => game.choose(node.id, id)} />}
         {node.ending && <div className="ending-label"><span>{node.ending}</span><button onClick={toTitle}>타이틀로 돌아가기 →</button></div>}
-        <DialogueBox node={node} speaker={speakerName(node.speaker)} onNext={() => game.advance(node.id)} />
+        <DialogueBox disabledNext={!entryAllowed} node={node} speaker={speakerName(node.speaker)} onNext={() => game.advance(node.id)} />
         <div className="novel-toolbar"><span>CHAPTER I <span className="toolbar-divider">/</span> {scenario.chapter.split('·')[1]?.trim()}</span><div className="toolbar-actions"><button onClick={() => setShowMemory(true)}>기억 기록 <span aria-hidden="true">◇</span></button><button onClick={() => setShowLog(true)}>대화 기록 <span aria-hidden="true">☷</span></button></div></div>
       </div>
     </section>}

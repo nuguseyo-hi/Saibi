@@ -1,10 +1,12 @@
 # 기술 스택과 아키텍처
 
+> 최신 심상던전 단계: [구현 계약·검증](DUNGEON_IMPLEMENTATION.md), [사용자 원본 기획](DUNGEON_BRIEF.md)을 우선한다. 아래 고해성사 단계와 초기 설계는 이력으로 유지한다. 현재 Phaser 3.90을 던전 탐험에 한해 추가했다. 던전의 핵심 편집 취소는 탐험으로, 확정은 결과 연출을 거쳐 고해성사로 돌아간다.
+
 상태: 전체 아키텍처 설계 제안. React, TypeScript, Vite, Tailwind CSS, Zustand, JSON 시나리오, localStorage 및 서버 없는 싱글플레이는 전체 프로젝트 요구사항이다. 후속 요청으로 타이틀·대화 초기 구현을 추가했다. 아래는 미래 확장을 포함한 제안이며 모든 구조가 현재 구현된 것은 아니다.
 
 ## 현재 구현 — 고해성사·사고 편집
 
-실제 작업 저장소는 `/workspace/sites/vespers-play`이며 사이트 프로젝트 ID는 `.openai/hosting.json`에 있다. React 19, Vite 7, TypeScript 5.9, Tailwind CSS 4, Zustand 5를 유지한다. 추가 런타임 의존성은 없다.
+실제 작업 저장소는 `/workspace/sites/vespers-play`이며 사이트 프로젝트 ID는 `.openai/hosting.json`에 있다. React 19, Vite 7, TypeScript 5.9, Tailwind CSS 4, Zustand 5를 유지한다. 당시 추가 런타임 의존성은 없었으며, 최신 던전 단계에서 Phaser를 추가했다.
 
 | 파일 | 책임 |
 | --- | --- |

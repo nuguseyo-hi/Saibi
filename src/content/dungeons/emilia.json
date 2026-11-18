@@ -1,0 +1,478 @@
+{
+  "id": "emilia_depth_01",
+  "characterId": "elin",
+  "name": "제1심층 — 존재하지 않는 종소리",
+  "sourceNodeId": "bell_memory",
+  "coreEventId": "emilia_core",
+  "successNext": "dungeon_result",
+  "rules": {
+    "initialGuard": 10,
+    "maxGuard": 20,
+    "maxAttempts": 2,
+    "guardPenalty": 10,
+    "stability": 3,
+    "immunityMs": 1000,
+    "playerSpeed": 220,
+    "interactionRadius": 110
+  },
+  "fragments": [
+    {
+      "id": "fragment_bell",
+      "title": "파편 A · 종소리",
+      "text": "그날 밤 나는 분명 종소리를 들었다. 종은 세 번 울렸다. 마지막 울림만 나를 향하고 있었다."
+    },
+    {
+      "id": "fragment_letter",
+      "title": "파편 B · 편지",
+      "text": "소리가 들린 뒤 오래된 편지 한 장을 발견했다. 수신인은 나였지만, 발신인의 이름은 도려내져 있었다."
+    },
+    {
+      "id": "fragment_tower",
+      "title": "파편 C · 종탑",
+      "text": "그런데 그 교회에는 종이 없었다. 종을 철거한 날짜는 내가 태어나기도 전이었다."
+    }
+  ],
+  "enemyTypes": [
+    {
+      "id": "denial",
+      "text": "싫어",
+      "behavior": "chase",
+      "speed": 135,
+      "detection": 270,
+      "radius": 28,
+      "damage": 1,
+      "windupMs": 400,
+      "chargeMs": 450,
+      "cooldownMs": 1300
+    },
+    {
+      "id": "forbidden",
+      "text": "안 돼",
+      "behavior": "charge",
+      "speed": 110,
+      "detection": 350,
+      "radius": 32,
+      "damage": 1,
+      "windupMs": 850,
+      "chargeMs": 420,
+      "cooldownMs": 1700
+    }
+  ],
+  "puzzles": [
+    {
+      "id": "door_rule",
+      "title": "문이 믿고 있는 문장",
+      "prefix": "이 문은 ",
+      "regionId": "door_adverb",
+      "original": "절대로",
+      "suffix": " 열리지 않는다.",
+      "hint": "이곳에서 시간은 문장의 시제를 따른다. 기다림도, 이미 끝난 일도 사실이 될 수 있다.",
+      "defaultOption": "never",
+      "options": [
+        {
+          "id": "never",
+          "label": "절대로",
+          "replacement": "절대로",
+          "suffix": " 열리지 않는다.",
+          "effect": "closed",
+          "delayMs": 0
+        },
+        {
+          "id": "someday",
+          "label": "언젠가는",
+          "replacement": "언젠가는",
+          "suffix": " 열린다.",
+          "effect": "delayed",
+          "delayMs": 4000
+        },
+        {
+          "id": "already",
+          "label": "이미",
+          "replacement": "이미",
+          "suffix": " 열렸다.",
+          "effect": "open",
+          "delayMs": 0
+        }
+      ]
+    },
+    {
+      "id": "letter_rule",
+      "title": "편지의 마지막 줄",
+      "prefix": "찢어진 기억은 ",
+      "regionId": "letter_verb",
+      "original": "흩어진다",
+      "suffix": ".",
+      "hint": "편지는 흩어진 문장이 다시 하나가 될 때, 쓰이지 않은 마지막 장을 드러낸다.",
+      "defaultOption": "scatter",
+      "options": [
+        {
+          "id": "scatter",
+          "label": "흩어진다",
+          "replacement": "흩어진다",
+          "suffix": ".",
+          "effect": "closed",
+          "delayMs": 0
+        },
+        {
+          "id": "gather",
+          "label": "이어진다",
+          "replacement": "이어진다",
+          "suffix": ".",
+          "effect": "open",
+          "delayMs": 0
+        }
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "entrance",
+      "name": "기억의 입구",
+      "subtitle": "ROOM 01 / THE THRESHOLD",
+      "objective": "낡은 명패를 조사하고 동쪽 문으로 나아가세요.",
+      "palette": [
+        "#172c2c",
+        "#a63649",
+        "#d8cab0"
+      ],
+      "width": 1600,
+      "height": 960,
+      "start": {
+        "x": 180,
+        "y": 480
+      },
+      "obstacles": [
+        {
+          "x": 510,
+          "y": 220,
+          "w": 130,
+          "h": 210
+        },
+        {
+          "x": 1010,
+          "y": 580,
+          "w": 240,
+          "h": 100
+        }
+      ],
+      "objects": [
+        {
+          "id": "entrance_note",
+          "kind": "inspect",
+          "x": 640,
+          "y": 530,
+          "title": "뒤집힌 명패",
+          "text": "세루스의 교회. 문을 열었던 기억은 없는데, 나는 이미 안에 있었다.\n\nWASD / 방향키로 이동하고 빛나는 사물 가까이에서 E를 누르세요. 가구와 검은 벽은 통과할 수 없습니다."
+        },
+        {
+          "id": "to_corridor",
+          "kind": "door",
+          "x": 1450,
+          "y": 480,
+          "title": "기억의 문",
+          "text": "E를 눌러 문 너머의 기억으로 이동한다.",
+          "targetRoom": "corridor",
+          "spawn": {
+            "x": 180,
+            "y": 480
+          }
+        }
+      ],
+      "enemies": [],
+      "whispers": [
+        "문은 안쪽으로만 열린다",
+        "누가 나를 불렀지?",
+        "여기는 처음 오는 곳"
+      ]
+    },
+    {
+      "id": "corridor",
+      "name": "부정의 복도",
+      "subtitle": "ROOM 02 / DENIAL",
+      "objective": "문자를 피하고 종소리 파편을 찾으세요. 문 위의 문장을 바꾸세요.",
+      "palette": [
+        "#302334",
+        "#9e2540",
+        "#c6bcaa"
+      ],
+      "width": 1600,
+      "height": 960,
+      "start": {
+        "x": 180,
+        "y": 480
+      },
+      "obstacles": [
+        {
+          "x": 500,
+          "y": 100,
+          "w": 90,
+          "h": 520
+        },
+        {
+          "x": 960,
+          "y": 420,
+          "w": 90,
+          "h": 420
+        }
+      ],
+      "objects": [
+        {
+          "id": "back_entrance",
+          "kind": "door",
+          "x": 120,
+          "y": 480,
+          "title": "기억의 문",
+          "text": "E를 눌러 문 너머의 기억으로 이동한다.",
+          "targetRoom": "entrance",
+          "spawn": {
+            "x": 1320,
+            "y": 480
+          }
+        },
+        {
+          "id": "bell_fragment",
+          "kind": "fragment",
+          "x": 760,
+          "y": 760,
+          "title": "부서진 소리",
+          "text": "종은 없지만 울림은 남아 있다.",
+          "fragmentId": "fragment_bell"
+        },
+        {
+          "id": "door_inscription",
+          "kind": "puzzle",
+          "x": 1250,
+          "y": 240,
+          "title": "문의 문장",
+          "text": "한 문장이 문을 잠그고 있다.",
+          "puzzleId": "door_rule"
+        },
+        {
+          "id": "to_letters",
+          "kind": "door",
+          "x": 1450,
+          "y": 480,
+          "title": "기억의 문",
+          "text": "E를 눌러 문 너머의 기억으로 이동한다.",
+          "targetRoom": "letters",
+          "spawn": {
+            "x": 180,
+            "y": 480
+          },
+          "requiresPuzzle": "door_rule"
+        }
+      ],
+      "enemies": [
+        {
+          "id": "denial_01",
+          "typeId": "denial",
+          "x": 740,
+          "y": 430,
+          "patrol": {
+            "x": 740,
+            "y": 660
+          }
+        },
+        {
+          "id": "forbidden_01",
+          "typeId": "forbidden",
+          "x": 1250,
+          "y": 610,
+          "patrol": {
+            "x": 1250,
+            "y": 410
+          }
+        }
+      ],
+      "whispers": [
+        "싫어 싫어 싫어",
+        "듣지 마",
+        "절대로 열리지 않는다"
+      ]
+    },
+    {
+      "id": "letters",
+      "name": "찢어진 편지의 방",
+      "subtitle": "ROOM 03 / THE UNSENT LETTER",
+      "objective": "편지를 조사하고 문장을 연결하세요. 세 파편이 모이면 최심부가 열립니다.",
+      "palette": [
+        "#203333",
+        "#ab454b",
+        "#d4c5a6"
+      ],
+      "width": 1600,
+      "height": 960,
+      "start": {
+        "x": 180,
+        "y": 480
+      },
+      "obstacles": [
+        {
+          "x": 530,
+          "y": 320,
+          "w": 210,
+          "h": 220
+        },
+        {
+          "x": 970,
+          "y": 120,
+          "w": 90,
+          "h": 380
+        }
+      ],
+      "objects": [
+        {
+          "id": "back_corridor",
+          "kind": "door",
+          "x": 120,
+          "y": 480,
+          "title": "기억의 문",
+          "text": "E를 눌러 문 너머의 기억으로 이동한다.",
+          "targetRoom": "corridor",
+          "spawn": {
+            "x": 1320,
+            "y": 480
+          }
+        },
+        {
+          "id": "letter_fragment",
+          "kind": "fragment",
+          "x": 420,
+          "y": 230,
+          "title": "발신인 없는 편지",
+          "text": "편지 가장자리에 누군가의 손톱자국이 남아 있다.",
+          "fragmentId": "fragment_letter"
+        },
+        {
+          "id": "letter_note",
+          "kind": "inspect",
+          "x": 780,
+          "y": 680,
+          "title": "찢어진 봉투",
+          "text": "「종은 울리지 않았다. 울린 것은…」\n나머지는 찢겨 있다. 흩어진 기억을 이어 붙이면 마지막 문장이 드러날지도 모른다."
+        },
+        {
+          "id": "letter_puzzle",
+          "kind": "puzzle",
+          "x": 1230,
+          "y": 710,
+          "title": "편지의 법칙",
+          "text": "문장 끝의 단어만 유난히 선명하다.",
+          "puzzleId": "letter_rule"
+        },
+        {
+          "id": "tower_fragment",
+          "kind": "fragment",
+          "x": 1260,
+          "y": 240,
+          "title": "철거된 종탑",
+          "text": "이어 붙인 편지 뒤로 오래된 종탑 기록이 나타난다.",
+          "fragmentId": "fragment_tower",
+          "requiresPuzzle": "letter_rule"
+        },
+        {
+          "id": "to_heart",
+          "kind": "door",
+          "x": 1450,
+          "y": 480,
+          "title": "기억의 문",
+          "text": "E를 눌러 문 너머의 기억으로 이동한다.",
+          "targetRoom": "heart",
+          "spawn": {
+            "x": 180,
+            "y": 480
+          },
+          "requiresFragments": 3,
+          "requiresPuzzle": "letter_rule"
+        }
+      ],
+      "enemies": [],
+      "whispers": [
+        "보내지 못한 말",
+        "받는 이: 에밀리아",
+        "종탑은 비어 있었다"
+      ]
+    },
+    {
+      "id": "heart",
+      "name": "종소리의 중심",
+      "subtitle": "ROOM 04 / THE ABSENT BELL",
+      "objective": "세 개의 기억을 품고 중앙의 종에 접근하세요.",
+      "palette": [
+        "#282030",
+        "#b23b52",
+        "#cbbd9d"
+      ],
+      "width": 1600,
+      "height": 960,
+      "start": {
+        "x": 180,
+        "y": 480
+      },
+      "obstacles": [
+        {
+          "x": 490,
+          "y": 180,
+          "w": 100,
+          "h": 200
+        },
+        {
+          "x": 490,
+          "y": 620,
+          "w": 100,
+          "h": 170
+        }
+      ],
+      "objects": [
+        {
+          "id": "back_letters",
+          "kind": "door",
+          "x": 120,
+          "y": 480,
+          "title": "기억의 문",
+          "text": "E를 눌러 문 너머의 기억으로 이동한다.",
+          "targetRoom": "letters",
+          "spawn": {
+            "x": 1320,
+            "y": 480
+          }
+        },
+        {
+          "id": "core_bell",
+          "kind": "core",
+          "x": 1030,
+          "y": 450,
+          "title": "존재하지 않는 종",
+          "text": "세 조각의 기억이 맞물린다. 종은 어디에도 없었고, 그 소리는 분명히 존재했다.",
+          "requiresFragments": 3
+        }
+      ],
+      "enemies": [],
+      "whispers": [
+        "종을 치는 손은 없다",
+        "그러나 누군가는 나를 부르고 있었다",
+        "기억은 사실보다 오래 산다"
+      ]
+    }
+  ],
+  "outcome": [
+    {
+      "resultId": "core_revelation",
+      "title": "계시의 종",
+      "text": "「그대가 들은 것은 ███의 부름이다.」",
+      "appearance": "revelation"
+    },
+    {
+      "resultId": "core_illusion",
+      "title": "흐려지는 울림",
+      "text": "「그날 밤, 아무것도 ███ 않았다.」",
+      "appearance": "illusion"
+    },
+    {
+      "resultId": "core_coincidence",
+      "title": "남겨진 우연",
+      "text": "「기억은 그 자리에 남아 있다.」",
+      "appearance": "unchanged"
+    }
+  ]
+}

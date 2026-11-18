@@ -9,7 +9,7 @@
   "characters": [
     {
       "id": "elin",
-      "name": "엘린",
+      "name": "에밀리아",
       "description": "길 잃은 방문자",
       "standing": "/assets/characters/elin.svg",
       "flagKeys": [
@@ -17,7 +17,8 @@
         "bellCoincidence",
         "bellRevelation",
         "bellIllusion",
-        "fearDeleted"
+        "fearDeleted",
+        "nyarlathotepRevelation"
       ]
     }
   ],
@@ -89,7 +90,7 @@
       "id": "comfort_end",
       "speaker": "narrator",
       "characterId": "elin",
-      "text": "엘린은 젖은 망토를 여미고 촛불 곁에 앉았다. 두 사람 사이에, 처음으로 편안한 침묵이 내려앉았다.",
+      "text": "에밀리아은 젖은 망토를 여미고 촛불 곁에 앉았다. 두 사람 사이에, 처음으로 편안한 침묵이 내려앉았다.",
       "next": "confession_intro",
       "presentation": "confession"
     },
@@ -115,7 +116,7 @@
       "speaker": "elin",
       "characterId": "elin",
       "presentation": "confession",
-      "text": "사실, 그날 밤의 이야기를 하고 싶어요. 아무도 없는 종탑에서 종소리가 들렸거든요.",
+      "text": "어젯밤 세루스의 교회에서 종소리를 들었어요. 하지만 그 교회에는 오래전부터 종이 없었다고 해요.",
       "next": "bell_memory"
     },
     {
@@ -265,7 +266,56 @@
       "presentation": "confession",
       "text": "고백은 끝났지만, 기억은 처음과 같지 않을지도 모른다. 오늘의 대화와 확정한 사고가 기록되었다.",
       "ending": "고해성사 완료"
+    },
+    {
+      "id": "dungeon_result",
+      "type": "branch",
+      "branches": [
+        {
+          "condition": {
+            "type": "flag",
+            "characterId": "elin",
+            "key": "bellRevelation",
+            "equals": true
+          },
+          "next": "dungeon_revelation"
+        },
+        {
+          "condition": {
+            "type": "flag",
+            "characterId": "elin",
+            "key": "bellIllusion",
+            "equals": true
+          },
+          "next": "dungeon_illusion"
+        }
+      ],
+      "fallbackNext": "dungeon_coincidence"
+    },
+    {
+      "id": "dungeon_revelation",
+      "speaker": "elin",
+      "characterId": "elin",
+      "presentation": "confession",
+      "text": "그 종소리에는 분명 어떤 의미가 있었던 것 같아요. 종이 없었다면… 누군가 저를 부른 게 아닐까요?",
+      "next": "confession_done"
+    },
+    {
+      "id": "dungeon_illusion",
+      "speaker": "elin",
+      "characterId": "elin",
+      "presentation": "confession",
+      "text": "생각해 보니 제 착각이었을지도 모르겠어요. 종이 없는 곳에서 종소리가 날 리 없잖아요.",
+      "next": "confession_done"
+    },
+    {
+      "id": "dungeon_coincidence",
+      "speaker": "elin",
+      "characterId": "elin",
+      "presentation": "confession",
+      "text": "아무래도 제가 너무 예민했던 것 같아요. 그날 밤은 그냥 우연이 겹쳤던 걸 거예요.",
+      "next": "confession_done"
     }
   ],
-  "contentVersion": "confession-1"
+  "contentVersion": "dungeon-1"
 }
