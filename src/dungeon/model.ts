@@ -7,7 +7,7 @@ export interface DungeonObject extends Point {
   fragmentId?: string; puzzleId?: string; targetRoom?: string; spawn?: Point;
   requiresPuzzle?: string; requiresFragments?: number;
 }
-export interface RoomData { id: string; name: string; subtitle: string; objective: string; palette: string[]; width: number; height: number; start: Point; obstacles: Rect[]; objects: DungeonObject[]; enemies: { id: string; typeId: string; x: number; y: number; patrol: Point }[]; whispers: string[] }
+export interface RoomData { backgroundImage?: string; id: string; name: string; subtitle: string; objective: string; palette: string[]; width: number; height: number; start: Point; obstacles: Rect[]; objects: DungeonObject[]; enemies: { id: string; typeId: string; x: number; y: number; patrol: Point }[]; whispers: string[] }
 export interface PuzzleOption { id: string; label: string; replacement: string; suffix: string; effect: 'closed' | 'delayed' | 'open'; delayMs: number }
 export interface PuzzleData { id: string; title: string; prefix: string; regionId: string; original: string; suffix: string; hint: string; defaultOption: string; options: PuzzleOption[] }
 export interface DungeonData {
@@ -106,6 +106,7 @@ export function parseDungeon(raw: unknown): DungeonData {
   }
   for (const r of list(raw.rooms, 'rooms')) {
     if (!record(r) || !nonempty(r.name) || !nonempty(r.subtitle) || !nonempty(r.objective) || !positive(r.width) || !positive(r.height) || !point(r.start)) fail('room'); id(r.id);
+    if (r.backgroundImage !== undefined && (typeof r.backgroundImage !== 'string' || !/^\/assets\/[a-zA-Z0-9_/-]+\.(png|webp|jpg)$/.test(r.backgroundImage))) fail('background image');
     if (!Array.isArray(r.palette) || r.palette.length < 3 || !r.palette.every(c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c))) fail('palette');
     if (!Array.isArray(r.whispers) || !r.whispers.every(nonempty) || !Array.isArray(r.obstacles) || !Array.isArray(r.enemies)) fail('room arrays');
     for (const o of r.obstacles) if (!point(o) || !record(o) || !positive(o.w) || !positive(o.h)) fail('obstacle');

@@ -27,7 +27,11 @@ export class DungeonScene extends Phaser.Scene {
   private transitioning = false;
   private reduced = false;
   constructor(data: DungeonData, bridge: DungeonBridge) { super('MindDungeon'); this.dataDef = data; this.bridge = bridge; }
-  preload() { for(const key of ['paper','scrap','eye','bell','letter','traveler']) this.load.image(key,`/assets/dungeon/${key}.svg`); }
+  preload() {
+    for(const key of ['paper','scrap','eye','bell','letter','traveler']) if(!this.textures.exists(key)) this.load.image(key,`/assets/dungeon/${key}.svg`);
+    const room=this.dataDef.rooms.find(r=>r.id===this.bridge.read().roomId)!;
+    if(room.backgroundImage && !this.textures.exists(`art-${room.id}`)) this.load.image(`art-${room.id}`,room.backgroundImage);
+  }
   create() {
     const progress=this.bridge.read();
     const room=this.dataDef.rooms.find(r=>r.id===progress.roomId)!;
@@ -38,6 +42,11 @@ export class DungeonScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(ink);
     this.physics.world.setBounds(44,44,room.width-88,room.height-88);
     this.cameras.main.setBounds(0,0,room.width,room.height);
+    const hasArtwork=!!room.backgroundImage && this.textures.exists(`art-${room.id}`);
+    if(hasArtwork) {
+      // World-space art keeps the painted bell aligned with its interaction point as the camera moves.
+      this.add.image(0,0,`art-${room.id}`).setOrigin(0).setDisplaySize(room.width,room.height).setDepth(-10);
+    } else {
     this.add.tileSprite(0,0,room.width*2,room.height*2,'paper').setOrigin(0).setTint(0xc0b59c).setScrollFactor(.85).setDepth(-10);
     // Deliberately mismatched layers: torn archival sheets, ink engravings, red cutouts.
     const backdrop=this.add.graphics().setDepth(-8).setScrollFactor(.92);
@@ -57,6 +66,7 @@ export class DungeonScene extends Phaser.Scene {
       const t=this.add.text(320+i*390,165+i*280,text,{fontFamily:'serif',fontSize:`${23+i*4}px`,color:room.palette[0],fontStyle:'bold'}).setAlpha(.27).setAngle(i%2?8:-12).setScrollFactor(.94).setDepth(-2);
       if(!this.reduced)this.tweens.add({targets:t,x:t.x+25,duration:5000+i*700,yoyo:true,repeat:-1});
     });
+    }
     const walls=this.physics.add.staticGroup();
     room.obstacles.forEach((o,i)=>{
       const solid=this.add.rectangle(o.x+o.w/2,o.y+o.h/2,o.w,o.h,ink).setStrokeStyle(4,0x9c3150).setDepth(3);
@@ -82,6 +92,14 @@ export class DungeonScene extends Phaser.Scene {
         image.add([rim,portal,cross]);
         blocker=this.add.rectangle(o.x,o.y,60,130,0,0);
         this.physics.add.existing(blocker,true);this.physics.add.collider(this.player,blocker);
+      } else if(o.kind==='core' && hasArtwork) {
+        // The painted bell is the actual scene centerpiece; do not draw a second placeholder bell.
+        const anchor=this.add.container(o.x,o.y);
+        const thread=this.add.graphics().lineStyle(2,0xa63649,.75);
+        thread.lineBetween(0,-180,0,-26);
+        const ring=this.add.ellipse(0,0,72,26,0x291c22,.35).setStrokeStyle(2,0xe9c783,.95);
+        anchor.add([thread,ring]);image=anchor;
+        if(!this.reduced)this.tweens.add({targets:ring,alpha:.45,duration:1400,yoyo:true,repeat:-1});
       } else if(o.kind==='core') {
         image=this.add.image(o.x,o.y-70,'bell').setDisplaySize(230,300);
         this.add.ellipse(o.x,o.y+50,240,65,0x24202f,.5).setDepth(2);

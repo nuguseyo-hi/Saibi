@@ -440,8 +440,8 @@
         {
           "id": "core_bell",
           "kind": "core",
-          "x": 1030,
-          "y": 450,
+          "x": 800,
+          "y": 620,
           "title": "존재하지 않는 종",
           "text": "세 조각의 기억이 맞물린다. 종은 어디에도 없었고, 그 소리는 분명히 존재했다.",
           "requiresFragments": 3
@@ -452,7 +452,8 @@
         "종을 치는 손은 없다",
         "그러나 누군가는 나를 부르고 있었다",
         "기억은 사실보다 오래 산다"
-      ]
+      ],
+      "backgroundImage": "/assets/dungeon/bell-heart-collage.png"
     }
   ],
   "outcome": [
