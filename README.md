@@ -1,6 +1,6 @@
 # 검은 기도 · VESPERS
 
-React + TypeScript + Vite 비주얼노벨과 Phaser 심상던전 프로토타입입니다. 에밀리아의 종소리 기억을 탐험하는 네 방을 추가했습니다. 이미지는 직접 제작한 임시 SVG 콜라주입니다.
+React + TypeScript + Vite 비주얼노벨과 Phaser 심상던전 프로토타입입니다. 에밀리아의 종소리 기억을 탐험하는 네 방을 추가했습니다. 심상던전 전체는 생성한 종이·판화·천 콜라주 배경과 투명 인형/오브젝트를 사용합니다. 한글 명조 폰트도 로컬로 포함합니다.
 
 플레이: https://vespers-black-prayer-7k2m.reflectivecanopy2.chatgpt.site
 

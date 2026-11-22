@@ -11,6 +11,7 @@ export interface RoomData { backgroundImage?: string; id: string; name: string; 
 export interface PuzzleOption { id: string; label: string; replacement: string; suffix: string; effect: 'closed' | 'delayed' | 'open'; delayMs: number }
 export interface PuzzleData { id: string; title: string; prefix: string; regionId: string; original: string; suffix: string; hint: string; defaultOption: string; options: PuzzleOption[] }
 export interface DungeonData {
+  art: { player: string; paper: string; door: string; fragment: string };
   id: string; characterId: string; name: string; sourceNodeId: string; coreEventId: string; successNext: string;
   rules: { initialGuard: number; maxGuard: number; maxAttempts: number; guardPenalty: number; stability: number; immunityMs: number; playerSpeed: number; interactionRadius: number };
   fragments: { id: string; title: string; text: string }[]; enemyTypes: EnemyType[]; puzzles: PuzzleData[]; rooms: RoomData[];
@@ -83,6 +84,8 @@ export function parseDungeon(raw: unknown): DungeonData {
   const list = (v: unknown, key: string) => { if (!Array.isArray(v) || !v.length) fail(key); return v as unknown[]; };
   if (!record(raw)) fail('root');
   for (const k of ['id','characterId','sourceNodeId','coreEventId','successNext']) if (!safeId(raw[k])) fail(k);
+  const art=raw.art;
+  if (!record(art) || !['player','paper','door','fragment'].every(key => typeof art[key] === 'string' && /^\/assets\/[a-zA-Z0-9_/-]+\.(png|webp|jpg)$/.test(art[key] as string))) fail('art');
   if (!nonempty(raw.name) || !record(raw.rules)) fail('name/rules');
   for (const key of ['initialGuard','maxGuard','maxAttempts','guardPenalty','stability','immunityMs','playerSpeed','interactionRadius']) if (!positive(raw.rules[key])) fail(`rules.${key}`);
   if (!Number.isInteger(raw.rules.stability) || !Number.isInteger(raw.rules.maxAttempts)) fail('integer rules');

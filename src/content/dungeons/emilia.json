@@ -183,7 +183,8 @@
         "문은 안쪽으로만 열린다",
         "누가 나를 불렀지?",
         "여기는 처음 오는 곳"
-      ]
+      ],
+      "backgroundImage": "/assets/dungeon/entrance-collage.png"
     },
     {
       "id": "corridor",
@@ -288,7 +289,8 @@
         "싫어 싫어 싫어",
         "듣지 마",
         "절대로 열리지 않는다"
-      ]
+      ],
+      "backgroundImage": "/assets/dungeon/corridor-collage.png"
     },
     {
       "id": "letters",
@@ -391,7 +393,8 @@
         "보내지 못한 말",
         "받는 이: 에밀리아",
         "종탑은 비어 있었다"
-      ]
+      ],
+      "backgroundImage": "/assets/dungeon/letters-collage.png"
     },
     {
       "id": "heart",
@@ -475,5 +478,11 @@
       "text": "「기억은 그 자리에 남아 있다.」",
       "appearance": "unchanged"
     }
-  ]
+  ],
+  "art": {
+    "player": "/assets/dungeon/traveler-collage.png",
+    "paper": "/assets/dungeon/paper-card.png",
+    "door": "/assets/dungeon/door-collage.png",
+    "fragment": "/assets/dungeon/memory-collage.png"
+  }
 }

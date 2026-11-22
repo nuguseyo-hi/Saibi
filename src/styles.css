@@ -70,3 +70,47 @@ h1 { font-weight: 400; }.title-screen h1 { margin: 0 0 7px; font-size: clamp(52p
 @keyframes word-distort { 0%{opacity:0;transform:skewX(3deg)}50%{transform:skewX(-1deg)}100%{opacity:1;transform:none} }
 @media(max-width:800px){.dungeon-heading{align-items:flex-start;flex-direction:column;gap:14px}.dungeon-stats{gap:24px}.dungeon-stats strong{display:inline;font-size:17px;margin-left:12px}.dungeon-room-heading{gap:10px;flex-wrap:wrap}.dungeon-bottom{flex-direction:column;align-items:flex-start;gap:10px}.dungeon-bottom p{max-width:100%}.dungeon-modal{padding:18px}.dungeon-modal h2{font-size:19px;margin:10px 0}.dungeon-modal>p:not(.eyebrow){font-size:12px}.interaction-prompt{bottom:8px;padding:5px 9px;font-size:11px}.interaction-sub{display:none}.dungeon-overlay{padding:7px}.puzzle-sentence{margin:12px 0;font-size:16px!important}.dungeon-modal .eyebrow{font-size:8px}.puzzle-options button{padding:7px 12px}.dungeon-outcome h1{font-size:27px}.dungeon-outcome .redacted-line{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.dungeon-outcome{animation:none!important}}
+
+/* A printed-paper theatre shared by every room, its inhabitants and its menus. */
+@font-face { font-family:'Memory Serif'; src:url('/assets/fonts/memory-serif.woff') format('woff'); font-style:normal; font-weight:400; font-display:swap; }
+.dungeon-screen,.dungeon-outcome { font-family:'Memory Serif','Noto Serif KR',serif; }
+.is-dungeon { background:#292a26 url('/assets/dungeon/corridor-collage.png') center top / 100% auto no-repeat; }
+.is-dungeon:before { content:'';position:absolute;inset:0;background:#191a18e8;z-index:-1;pointer-events:none; }
+.is-dungeon .background-layer { display:none; }
+.dungeon-heading { border-bottom:1px dashed #a59b7a70;padding-bottom:17px;margin-bottom:8px; }
+.dungeon-heading h1 { color:#e7d7b4;text-shadow:1px 1px #803b3b;letter-spacing:.04em; }
+.dungeon-heading .eyebrow { color:#baa27f;font-size:12px; }
+.dungeon-stats { font-size:14px; }.dungeon-stats strong { color:#ce947e; }
+.dungeon-room-heading { border:0;font-size:16px;padding:15px 0; }.dungeon-room-heading>span { font-size:12px;color:#c4b091; }.dungeon-room-heading strong { color:#e7d5af; }
+.dungeon-room-heading button { color:#d8c29e;font-size:14px; }
+.dungeon-frame { border:7px solid #514537;outline:1px solid #a38a64;box-shadow:0 1px 0 10px #221f1c,0 18px 45px #0008; }
+.dungeon-frame:after { content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 32px #35231f33; }
+.dungeon-bottom { font-size:14px;line-height:1.9;padding-top:25px;color:#d3c2a5; }.dungeon-bottom p>span { color:#d1a693; }
+.dungeon-bottom kbd { background:#dbc9a5;color:#382e25;border:1px solid #827058;border-radius:0;box-shadow:2px 2px #080907; }
+.interaction-prompt,.dungeon-focus { color:#332a23;background:#e2d2b0;border:1px solid #8b7154;box-shadow:3px 4px #31261f66; }
+.interaction-prompt { clip-path:polygon(0 5%,97% 0,100% 12%,99% 95%,4% 100%,1% 88%);padding:13px 22px;font-size:16px; }
+.interaction-prompt kbd { color:#8d333b;border-color:#9a6559;background:#f0e4c7; }.interaction-sub { color:#635443;font-size:12px; }
+.dungeon-overlay { background:#29231ed9; }
+.dungeon-modal { color:#352c25;border:1px solid #7f6549;padding:35px 38px;background:linear-gradient(#eee1c5ed,#e3d0aceb),url('/assets/dungeon/paper-card.png') center/cover;box-shadow:7px 9px #08080688;clip-path:polygon(0 1%,23% 0,59% 1%,98% 0,100% 18%,99% 67%,100% 99%,61% 100%,28% 99%,1% 100%); }
+.dungeon-modal h2 { color:#382c26;text-shadow:1px 1px #fbefd8; }.dungeon-modal .eyebrow { color:#7c4b43; }
+.dungeon-modal>p:not(.eyebrow) { font-size:16px;line-height:1.9; }.dungeon-modal small { color:#6c5947;font-size:13px; }
+.dungeon-modal .puzzle-hint { color:#675548; }.dungeon-modal .fragment-collected { color:#3a6354; }
+.dungeon-modal .thought-target { background:#d6c39a88;color:#742f35;border:0;border-bottom:2px dashed #914d45;box-shadow:2px 3px #826f4b33; }
+.dungeon-modal .puzzle-options button { color:#4d4235;border-color:#8f795d;background:#f4e6c9;box-shadow:2px 2px #8f795d55; }
+.dungeon-modal .puzzle-options button.chosen { color:#f1e3c3;background:#75413d;border-color:#75413d; }
+.dungeon-modal .primary-button { color:#f1e2bd;background:#713b3d;border:1px solid #442824;font-size:15px; }
+.dungeon-modal .secondary-button { color:#493b2e;background:#d9c39d;border:1px solid #8d7254;font-size:15px; }
+.dungeon-modal .fragment-list h3 { color:#713b3d; }.dungeon-modal .fragment-list p { color:#514638;font-size:15px; }
+.dungeon-modal .fragment-list article { border-color:#90795877; }
+.dungeon-modal button:focus-visible { outline:2px solid #6d3735;outline-offset:4px; }
+.dungeon-outcome .redacted-line { font-family:'Memory Serif',serif;border-bottom:1px dashed #a48861; }
+@media(max-width:800px){.dungeon-frame{border-width:3px}.dungeon-modal{padding:20px}.dungeon-modal>p:not(.eyebrow){font-size:14px}.dungeon-heading .eyebrow{font-size:10px}.dungeon-room-heading{font-size:14px}.dungeon-room-heading>span{font-size:10px}.dungeon-bottom{font-size:12px}.interaction-prompt{font-size:13px;padding:8px 13px}}
+.dungeon-loading { position:absolute;inset:0;display:grid;place-items:center;background:#262520;color:#e6d5ad;font:18px 'Memory Serif',serif;z-index:6;pointer-events:none; }
+.is-dungeon-edit { font-family:'Memory Serif',serif;background:#252821 url('/assets/dungeon/bell-heart-collage.png') center top/cover no-repeat; }
+.is-dungeon-edit .background-layer { display:none; }.is-dungeon-edit .vignette { background:#171914d9; }
+.is-dungeon-edit .thought-sheet { background:linear-gradient(#eee1c5ef,#e3d0aceb),url('/assets/dungeon/paper-card.png') center/cover;border:1px solid #b69b71;box-shadow:4px 5px #0004; }
+.is-dungeon-edit .thought-line { color:#3d3229; }.is-dungeon-edit .sheet-heading,.is-dungeon-edit .sheet-heading>span:last-child,.is-dungeon-edit .thought-number { color:#795b46; }
+.is-dungeon-edit .thought-target { color:#87363d;border-color:#87363d; }.is-dungeon-edit .thought-target.is-edited { color:#385e50;border-color:#385e50; }.is-dungeon-edit .thought-target:hover,.is-dungeon-edit .thought-target.is-selected { color:#682831;background:#a3633922; }
+.is-dungeon-edit .mind-intro h1 { color:#ead9b5; }.is-dungeon-edit .edit-options button.chosen { background:#78474066;border-color:#bc8f73; }.is-dungeon-edit .primary-button { background:#733d3e;border-color:#a78463;color:#efdfb9; }
+.dungeon-outcome img { display:none; }.dungeon-outcome:before { content:'';display:block;width:min(620px,90%);height:280px;margin:24px auto;background:url('/assets/dungeon/bell-heart-collage.png') center 15%/cover;border:7px solid #b2a07d;outline:1px dashed #e1c99e;box-shadow:4px 5px #0005;transform:rotate(-1deg); }
+.dungeon-outcome.revelation:before { box-shadow:0 0 45px #91334055; }.dungeon-outcome.illusion:before { opacity:.4;filter:blur(1px) grayscale(.6); }.dungeon-outcome.rejected:before { opacity:.45;transform:rotate(3deg); }

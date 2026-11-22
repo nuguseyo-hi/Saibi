@@ -21,6 +21,7 @@ export function DungeonScreen({ data, progress, actions }: { data: DungeonData; 
   const [panel,setPanel]=useState<Panel>(null), [nearby,setNearby]=useState<DungeonObject|null>(null);
   const [selected,setSelected]=useState(''), [wordSelected,setWordSelected]=useState(false), [loadError,setLoadError]=useState<string|null>(null);
   const [focused,setFocused]=useState(true);
+  const [loaded,setLoaded]=useState(false);
   const latest=useRef({actions,panel}); latest.current={actions,panel};
   const room=data.rooms.find(r=>r.id===progress.roomId)!;
   const focusGame=()=>host.current?.focus();
@@ -41,7 +42,7 @@ export function DungeonScreen({ data, progress, actions }: { data: DungeonData; 
     let disposed=false, game:Phaser.Game|undefined;
     const element=host.current!;
     // Lazy module + cancellation prevents StrictMode's discarded mount creating a canvas.
-    void Promise.all([import('phaser'),import('../dungeon/DungeonScene')]).then(([{default:Phaser},{DungeonScene}])=>{
+    void Promise.all([import('phaser'),import('../dungeon/DungeonScene'),document.fonts.load('400 20px "Memory Serif"').catch(()=>[])]).then(([{default:Phaser},{DungeonScene}])=>{
       if(disposed)return;
       const dungeonScene=new DungeonScene(data,{
         read:()=>latest.current.actions.read(),
@@ -50,6 +51,7 @@ export function DungeonScreen({ data, progress, actions }: { data: DungeonData; 
         checkpoint:p=>latest.current.actions.checkpoint(p),
         hit:(id,p,now)=>latest.current.actions.hit(id,p,now),
         nearby:setNearby,
+        ready:()=>{if(!disposed)setLoaded(true);},
         sound:cue=>element.dispatchEvent(new CustomEvent('vespers:sound',{detail:{cue},bubbles:true})),
       });
       scene.current=dungeonScene;
@@ -79,6 +81,7 @@ export function DungeonScreen({ data, progress, actions }: { data: DungeonData; 
     <div className="dungeon-room-heading"><span>{room.subtitle}</span><strong>{room.name}</strong><button onClick={()=>{checkpoint();setPanel({kind:'pause'});}}>일시정지 · ESC</button></div>
     <div className="dungeon-frame">
       <div ref={host} className="phaser-host" tabIndex={0} role="application" aria-label="심상세계 던전. WASD 또는 방향키 이동, E 조사, Escape 일시정지" onPointerDown={focusGame} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} />
+      {!loaded&&!loadError&&<div className="dungeon-loading" role="status">기억의 무대를 펼치는 중…</div>}
       {!focused&&!panel&&<button className="dungeon-focus" onClick={focusGame}>던전을 클릭하면 이동합니다</button>}
       {loadError&&<div className="dungeon-modal"><h2>{loadError}</h2><button onClick={actions.retreat}>고해성사로 돌아가기</button></div>}
       {panel&&<div className="dungeon-overlay"><div className="dungeon-modal" role="dialog" aria-modal="true" aria-labelledby="dungeon-modal-title">

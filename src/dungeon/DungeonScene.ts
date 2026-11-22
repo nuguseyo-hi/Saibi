@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { COLLAGE_FONT, PaperLabel, cutoutWord } from './collage';
 import { direction, objectAvailable, safePosition } from './model';
 import type { DungeonData, DungeonProgress, DungeonObject, Point, EnemyType } from './model';
 
@@ -9,9 +10,10 @@ export interface DungeonBridge {
   hit: (enemyId: string, position: Point, now: number) => void;
   nearby: (object: DungeonObject | null) => void;
   checkpoint: (position: Point) => void;
+  ready: () => void;
   sound: (cue: 'door' | 'hit' | 'inspect') => void;
 }
-interface EnemyRuntime { id: string; type: EnemyType; body: Phaser.Physics.Arcade.Image; label: Phaser.GameObjects.Text; shadow: Phaser.GameObjects.Text; home: Point; patrol: Point; reverse: boolean; state: 'patrol' | 'windup' | 'charge' | 'rest'; until: number; vector: Point }
+interface EnemyRuntime { id: string; type: EnemyType; body: Phaser.Physics.Arcade.Image; label: Phaser.GameObjects.Container; shadow: Phaser.GameObjects.Container; home: Point; patrol: Point; reverse: boolean; state: 'patrol' | 'windup' | 'charge' | 'rest'; until: number; vector: Point }
 export class DungeonScene extends Phaser.Scene {
   private dataDef: DungeonData;
   private bridge: DungeonBridge;
@@ -21,7 +23,7 @@ export class DungeonScene extends Phaser.Scene {
   private shadow!: Phaser.GameObjects.Ellipse;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private enemies: EnemyRuntime[] = [];
-  private marks: { object: DungeonObject; image: Phaser.GameObjects.Image | Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; blocker?: Phaser.GameObjects.Rectangle }[] = [];
+  private marks: { object: DungeonObject; image: Phaser.GameObjects.Image | Phaser.GameObjects.Container; label: PaperLabel; blocker?: Phaser.GameObjects.Rectangle }[] = [];
   private lastNearby: string | null = null;
   private elapsed = 0;
   private transitioning = false;
@@ -29,6 +31,7 @@ export class DungeonScene extends Phaser.Scene {
   constructor(data: DungeonData, bridge: DungeonBridge) { super('MindDungeon'); this.dataDef = data; this.bridge = bridge; }
   preload() {
     for(const key of ['paper','scrap','eye','bell','letter','traveler']) if(!this.textures.exists(key)) this.load.image(key,`/assets/dungeon/${key}.svg`);
+    for(const [key,path] of Object.entries(this.dataDef.art)) if(!this.textures.exists(`art-${key}`)) this.load.image(`art-${key}`,path);
     const room=this.dataDef.rooms.find(r=>r.id===this.bridge.read().roomId)!;
     if(room.backgroundImage && !this.textures.exists(`art-${room.id}`)) this.load.image(`art-${room.id}`,room.backgroundImage);
   }
@@ -63,33 +66,49 @@ export class DungeonScene extends Phaser.Scene {
       if(!this.reduced)this.tweens.add({targets:scrap,angle:scrap.angle+3,duration:3500+i*170,yoyo:true,repeat:-1});
     }
     room.whispers.forEach((text,i)=>{
-      const t=this.add.text(320+i*390,165+i*280,text,{fontFamily:'serif',fontSize:`${23+i*4}px`,color:room.palette[0],fontStyle:'bold'}).setAlpha(.27).setAngle(i%2?8:-12).setScrollFactor(.94).setDepth(-2);
+      const t=this.add.text(320+i*390,165+i*280,text,{fontFamily:COLLAGE_FONT,fontSize:`${23+i*4}px`,color:room.palette[0],fontStyle:'bold'}).setAlpha(.27).setAngle(i%2?8:-12).setScrollFactor(.94).setDepth(-2);
       if(!this.reduced)this.tweens.add({targets:t,x:t.x+25,duration:5000+i*700,yoyo:true,repeat:-1});
     });
     }
+    if(hasArtwork) room.whispers.forEach((text,i)=>{
+      const strip=new PaperLabel(this,340+i*370,room.height-105-i%2*35,text,17)
+        .setDepth(-1).setAlpha(.45).setAngle(i%2?3:-3);
+      if(!this.reduced)this.tweens.add({targets:strip,angle:strip.angle+1.5,duration:4800+i*400,yoyo:true,repeat:-1});
+    });
     const walls=this.physics.add.staticGroup();
-    room.obstacles.forEach((o,i)=>{
-      const solid=this.add.rectangle(o.x+o.w/2,o.y+o.h/2,o.w,o.h,ink).setStrokeStyle(4,0x9c3150).setDepth(3);
+    room.obstacles.forEach(o=>{
+      // Collision bounds remain unchanged; overlapping paper/fabric slabs sit inside that footprint.
+      const solid=this.add.rectangle(o.x+o.w/2,o.y+o.h/2,o.w,o.h,0x3d3930).setDepth(3);
       walls.add(solid);
-      this.add.image(o.x+o.w/2,o.y+o.h/2,'scrap').setDisplaySize(o.w-12,o.h-12).setTint(0x84776b).setDepth(4);
-      this.add.text(o.x+o.w/2,o.y+o.h/2,i%2?'欠落':'封',{fontSize:'46px',fontFamily:'serif',color:'#241d29'}).setOrigin(.5).setDepth(5);
+      const vertical=o.h>o.w, count=Math.max(1,Math.ceil((vertical?o.h:o.w)/120));
+      for(let i=0;i<count;i++) {
+        const length=(vertical?o.h:o.w)/count;
+        this.add.image(vertical?o.x+o.w/2:o.x+(i+.5)*length,vertical?o.y+(i+.5)*length:o.y+o.h/2,'art-paper')
+          .setDisplaySize(vertical?o.w:length+6,vertical?length+6:o.h).setTint(i%2?0x8c9b8c:0xb5a58a).setDepth(4);
+      }
+      const stitch=this.add.graphics().setDepth(5).lineStyle(2,0x713638,.8);
+      for(let offset=10;offset<(vertical?o.h:o.w)-8;offset+=15) {
+        const x=vertical?o.x+7:o.x+offset,y=vertical?o.y+offset:o.y+7;
+        stitch.lineBetween(x-3,y-4,x+3,y+4);
+      }
     });
     if(!this.textures.exists('body-dot')) { const g=this.make.graphics({x:0,y:0});g.fillStyle(0xffffff);g.fillCircle(18,18,18);g.generateTexture('body-dot',36,36);g.destroy(); }
     const p=safePosition(progress.position,room);
     this.player=this.physics.add.image(p.x,p.y,'body-dot').setAlpha(0).setCircle(18).setCollideWorldBounds(true);
     this.physics.add.collider(this.player,walls);
     this.shadow=this.add.ellipse(p.x,p.y+4,42,17,0x17121e,.45).setDepth(19);
-    this.doll=this.add.image(p.x,p.y-25,'traveler').setDisplaySize(47,70).setDepth(20);
+    this.doll=this.add.image(p.x,p.y-38,'art-player').setDisplaySize(66,100).setDepth(20);
     this.cameras.main.startFollow(this.player,true,.13,.13);
     room.objects.forEach(o=>{
       let image: Phaser.GameObjects.Image | Phaser.GameObjects.Container;
       let blocker: Phaser.GameObjects.Rectangle | undefined;
       if(o.kind==='door') {
         image=this.add.container(o.x,o.y);
-        const rim=this.add.rectangle(0,0,70,145,0x171923).setStrokeStyle(5,red);
-        const portal=this.add.rectangle(0,0,48,120,0x548f83,.6);
-        const cross=this.add.text(0,0,'×',{fontSize:'55px',color:'#e5c8ac'}).setOrigin(.5);
-        image.add([rim,portal,cross]);
+        const portal=this.add.ellipse(0,30,65,80,0x2e5b52,.5);
+        const arch=this.add.image(0,-12,'art-door').setDisplaySize(103,172);
+        const stitches=this.add.graphics().lineStyle(3,0xa43840,.95);
+        for(let i=-32;i<=28;i+=12){stitches.lineBetween(-21,i-9,21,i+12);stitches.lineBetween(21,i-9,-21,i+12);}
+        image.add([portal,arch,stitches]);
         blocker=this.add.rectangle(o.x,o.y,60,130,0,0);
         this.physics.add.existing(blocker,true);this.physics.add.collider(this.player,blocker);
       } else if(o.kind==='core' && hasArtwork) {
@@ -105,18 +124,18 @@ export class DungeonScene extends Phaser.Scene {
         this.add.ellipse(o.x,o.y+50,240,65,0x24202f,.5).setDepth(2);
         if(!this.reduced)this.tweens.add({targets:image,y:image.y-12,angle:3,duration:2700,yoyo:true,repeat:-1});
       } else {
-        image=this.add.image(o.x,o.y,o.kind==='fragment'?'letter':'scrap').setDisplaySize(o.kind==='fragment'?80:100,o.kind==='fragment'?60:76).setAngle(o.kind==='puzzle'?-5:7);
+        image=this.add.image(o.x,o.y,o.kind==='fragment'?'art-fragment':'art-paper').setDisplaySize(o.kind==='fragment'?105:120,o.kind==='fragment'?72:82).setAngle(o.kind==='puzzle'?-5:7);
         if(!this.reduced)this.tweens.add({targets:image,angle:image.angle+3,duration:2400,yoyo:true,repeat:-1});
       }
       image.setDepth(8);
-      const label=this.add.text(o.x,o.y+(o.kind==='core'?105:83),o.title,{fontFamily:'serif',fontSize:'15px',color:'#e9d8b7',backgroundColor:'#252332',padding:{x:9,y:5}}).setOrigin(.5).setDepth(9);
+      const label=new PaperLabel(this,o.x,o.y+(o.kind==='core'?85:83),o.title).setDepth(9).setAngle(-1);
       this.marks.push({object:o,image,label,blocker});
     });
     for(const spawn of room.enemies) {
       const type=this.dataDef.enemyTypes.find(e=>e.id===spawn.typeId)!;
       const body=this.physics.add.image(spawn.x,spawn.y,'body-dot').setDisplaySize(type.radius*2,type.radius*2).setAlpha(0).setCollideWorldBounds(true);
-      const shadow=this.add.text(spawn.x+5,spawn.y+4,type.text,{fontFamily:'serif',fontSize:'45px',color:'#981e3d',fontStyle:'bold'}).setOrigin(.5).setDepth(12);
-      const label=this.add.text(spawn.x,spawn.y,type.text,{fontFamily:'serif',fontSize:'43px',color:type.behavior==='chase'?'#9b1839':'#211c28',stroke:'#d1b39a',strokeThickness:1,fontStyle:'bold'}).setOrigin(.5).setDepth(13);
+      const shadow=cutoutWord(this,type.text,spawn.x+5,spawn.y+4,'#882e37').setAlpha(.28).setDepth(12);
+      const label=cutoutWord(this,type.text,spawn.x,spawn.y,type.behavior==='chase'?'#802632':'#292620').setDepth(13);
       const e:EnemyRuntime={id:spawn.id,type,body,label,shadow,home:{x:spawn.x,y:spawn.y},patrol:spawn.patrol,reverse:false,state:'patrol',until:0,vector:{x:0,y:0}};
       this.enemies.push(e);this.physics.add.collider(body,walls);
       this.physics.add.overlap(this.player,body,()=>{
@@ -131,6 +150,7 @@ export class DungeonScene extends Phaser.Scene {
     this.game.events.on(Phaser.Core.Events.BLUR,reset);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{this.game.events.off(Phaser.Core.Events.BLUR,reset);this.bridge.nearby(null);});
     this.cameras.main.fadeIn(this.reduced?0:400,15,13,23);
+    this.bridge.ready();
   }
   position(): Point { return this.player ? {x:this.player.x,y:this.player.y} : this.bridge.read().position; }
   update(_time:number,delta:number) {
@@ -149,7 +169,7 @@ export class DungeonScene extends Phaser.Scene {
     const v=direction(key('D')+key('RIGHT')-key('A')-key('LEFT'),key('S')+key('DOWN')-key('W')-key('UP'),this.dataDef.rules.playerSpeed);
     this.player.setVelocity(v.x,v.y);
     this.shadow.setPosition(this.player.x,this.player.y+7);
-    this.doll.setPosition(this.player.x,this.player.y-25).setAngle(this.reduced||!Math.hypot(v.x,v.y)?0:Math.sin(this.elapsed/90)*3);
+    this.doll.setPosition(this.player.x,this.player.y-38-(this.reduced||!Math.hypot(v.x,v.y)?0:Math.abs(Math.sin(this.elapsed/150))*2)).setAngle(this.reduced||!Math.hypot(v.x,v.y)?0:Math.sin(this.elapsed/90)*3);
     this.doll.setAlpha(Date.now()-progress.lastHitAt<this.dataDef.rules.immunityMs ? .55 : 1);
     const candidates=this.marks.filter(m=>m.object.kind!=='fragment'||!progress.fragments.includes(m.object.fragmentId!));
     const near=candidates.sort((a,b)=>Phaser.Math.Distance.Between(this.player.x,this.player.y,a.object.x,a.object.y)-Phaser.Math.Distance.Between(this.player.x,this.player.y,b.object.x,b.object.y)).find(m=>Phaser.Math.Distance.Between(this.player.x,this.player.y,m.object.x,m.object.y)<=this.dataDef.rules.interactionRadius);
@@ -157,8 +177,8 @@ export class DungeonScene extends Phaser.Scene {
       const available=objectAvailable(progress,m.object), collected=m.object.fragmentId && progress.fragments.includes(m.object.fragmentId);
       m.image.setAlpha(collected ? .3 : available ? 1 : .45);
       m.label.setText(collected?'획득한 기억':m.object.kind==='door'?(available?'열린 문 · E':'잠긴 문'):m.object.title);
-      m.label.setColor(near===m?'#f8db80':'#d9c6ac');
-      if(m.blocker) { (m.blocker.body as Phaser.Physics.Arcade.StaticBody).enable=!available;const cross=(m.image as Phaser.GameObjects.Container).getAt(2) as Phaser.GameObjects.Text;cross.setVisible(!available); }
+      m.label.setColor(near===m?'#8b2633':'#352b25');
+      if(m.blocker) { (m.blocker.body as Phaser.Physics.Arcade.StaticBody).enable=!available;const cross=(m.image as Phaser.GameObjects.Container).getAt(2) as Phaser.GameObjects.Graphics;cross.setVisible(!available); }
     }
     if((near?.object.id??null)!==this.lastNearby){this.lastNearby=near?.object.id??null;this.bridge.nearby(near?.object??null);}
     if(near&&Phaser.Input.Keyboard.JustDown(this.keys.E)){this.bridge.checkpoint(this.position());this.bridge.sound('inspect');this.bridge.interact(near.object,this.position());return;}

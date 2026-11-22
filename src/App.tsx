@@ -51,7 +51,7 @@ export default function App() {
     game.start();
   };
 
-  return <main className={`game-viewport ${game.screen === 'title' ? 'is-title' : game.screen === 'dungeon' ? 'is-dungeon' : game.screen === 'dungeonResult' ? 'is-dungeon-result' : game.screen === 'mindEdit' ? 'is-mind' : 'is-dialogue'} ${isConfession ? 'is-confession' : ''}`}>
+  return <main className={`game-viewport ${game.screen === 'title' ? 'is-title' : game.screen === 'dungeon' ? 'is-dungeon' : game.screen === 'dungeonResult' ? 'is-dungeon-result' : game.screen === 'mindEdit' ? 'is-mind' : 'is-dialogue'} ${isConfession ? 'is-confession' : ''} ${game.screen === 'mindEdit' && game.dungeon?.status === 'editing' ? 'is-dungeon-edit' : ''}`}>
     <BackgroundLayer src={scenario.background} />
     <div className="vignette" aria-hidden="true" />
     <div className="grain" aria-hidden="true" />
