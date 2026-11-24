@@ -22,7 +22,8 @@ if (!scenario.nodes.some(n => n.id === dungeon.sourceNodeId) || !scenario.nodes.
 const gameStore = createGameStore(scenario, mindEvents, createSavePort(() => window.localStorage, scenario, mindEvents, dungeon), { dungeon, development: import.meta.env.DEV });
 const speakerName = (id: string) => id === 'narrator' ? '이야기' : id === 'player' ? '당신' : scenario.characters.find(c => c.id === id)?.name ?? id;
 
-export default function App() {
+export default function App({ playerName }: { playerName?: string } = {}) {
+  const nameOf = (id: string) => id === 'player' && playerName ? playerName : speakerName(id);
   const game = useStore(gameStore);
   const [showLog, setShowLog] = useState(false);
   const [showMemory, setShowMemory] = useState(false);
@@ -83,13 +84,13 @@ export default function App() {
         {game.actionError && <p className="action-error" role="alert">{game.actionError}</p>}
         {node.choices && <ChoiceList choices={node.choices} choose={id => game.choose(node.id, id)} />}
         {node.ending && <div className="ending-label"><span>{node.ending}</span><button onClick={toTitle}>타이틀로 돌아가기 →</button></div>}
-        <DialogueBox disabledNext={!entryAllowed} node={node} speaker={speakerName(node.speaker)} onNext={() => game.advance(node.id)} />
+        <DialogueBox disabledNext={!entryAllowed} node={node} speaker={nameOf(node.speaker)} onNext={() => game.advance(node.id)} />
         <div className="novel-toolbar"><span>CHAPTER I <span className="toolbar-divider">/</span> {scenario.chapter.split('·')[1]?.trim()}</span><div className="toolbar-actions"><button onClick={() => setShowMemory(true)}>기억 기록 <span aria-hidden="true">◇</span></button><button onClick={() => setShowLog(true)}>대화 기록 <span aria-hidden="true">☷</span></button></div></div>
       </div>
     </section>}
     {game.screen === 'title' && <footer className="title-footer"><span>PROLOGUE <span className="footer-rule" /> THE OPEN DOOR</span><span>이야기의 시작 · 01</span></footer>}
     <div className={`save-indicator ${game.saveError ? 'has-error' : ''}`} role="status">{game.saveError ? <><span>{game.saveError}</span>{game.checkpoint && <button onClick={game.retrySave}>저장 재시도</button>}</> : game.saveStatus === 'saved' ? '진행 자동 저장됨' : null}</div>
     {showMemory && <MemoryRecord results={game.editResults} events={mindEvents} close={() => setShowMemory(false)} />}
-    {showLog && <DialogueLog entries={game.log} name={speakerName} close={() => setShowLog(false)} />}
+    {showLog && <DialogueLog entries={game.log} name={nameOf} close={() => setShowLog(false)} />}
   </main>;
 }

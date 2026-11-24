@@ -1,0 +1,634 @@
+{
+  "dungeon": {
+    "art": {
+      "player": "/assets/dungeon/traveler-collage.png",
+      "paper": "/assets/dungeon/paper-card.png",
+      "door": "/assets/dungeon/door-collage.png",
+      "fragment": "/assets/dungeon/memory-collage.png"
+    },
+    "rules": {
+      "initialGuard": 10,
+      "maxGuard": 20,
+      "maxAttempts": 2,
+      "guardPenalty": 10,
+      "stability": 3,
+      "immunityMs": 1000,
+      "playerSpeed": 220,
+      "interactionRadius": 110
+    },
+    "enemyTypes": [
+      {
+        "id": "betrayal_enemy",
+        "text": "배신",
+        "behavior": "chase",
+        "speed": 100,
+        "detection": 230,
+        "radius": 28,
+        "damage": 1,
+        "windupMs": 400,
+        "chargeMs": 450,
+        "cooldownMs": 1300
+      },
+      {
+        "id": "refusal_enemy",
+        "text": "싫어!",
+        "behavior": "charge",
+        "speed": 80,
+        "detection": 240,
+        "radius": 32,
+        "damage": 1,
+        "windupMs": 1100,
+        "chargeMs": 420,
+        "cooldownMs": 1700
+      }
+    ],
+    "id": "first_infiltration",
+    "characterId": "inquisitor",
+    "name": "최초의 침투 — 이름 없는 사도의 내면",
+    "sourceNodeId": "infiltrate",
+    "coreEventId": "first_identity",
+    "successNext": "return_0",
+    "puzzles": [],
+    "fragments": [
+      {
+        "id": "kw_sun",
+        "title": "태양의 신",
+        "text": "태양의 신"
+      },
+      {
+        "id": "kw_apostle",
+        "title": "사도",
+        "text": "사도"
+      },
+      {
+        "id": "kw_companion",
+        "title": "동료",
+        "text": "동료"
+      },
+      {
+        "id": "kw_betrayal",
+        "title": "배신",
+        "text": "배신"
+      },
+      {
+        "id": "kw_merit",
+        "title": "공적",
+        "text": "공적"
+      }
+    ],
+    "outcome": [
+      {
+        "resultId": "identity_apostle",
+        "title": "첫 번째 막",
+        "text": "나는 ■■■■■■■의 사도다.",
+        "appearance": "revelation"
+      }
+    ],
+    "rooms": [
+      {
+        "id": "betrayal",
+        "name": "배신의 회랑",
+        "subtitle": "I · 텍스트는 사물이다",
+        "objective": "단어의 서식을 바꾸고, 동료를 믿었던 기억으로 다리를 펼치세요.",
+        "palette": [
+          "#352a30",
+          "#a2393c",
+          "#e0cfa7"
+        ],
+        "width": 1600,
+        "height": 960,
+        "start": {
+          "x": 180,
+          "y": 480
+        },
+        "backgroundImage": "/assets/dungeon/corridor-collage.png",
+        "obstacles": [
+          {
+            "x": 900,
+            "y": 44,
+            "w": 120,
+            "h": 376
+          },
+          {
+            "x": 900,
+            "y": 540,
+            "w": 120,
+            "h": 376
+          }
+        ],
+        "objects": [
+          {
+            "id": "keyword_cache",
+            "kind": "inspect",
+            "x": 210,
+            "y": 720,
+            "title": "접힌 대화의 기억",
+            "text": "놓친 말들은 여기에도 남아 있다. 태양의 신 · 사도 · 동료 · 배신 · 공적."
+          },
+          {
+            "id": "format_wall",
+            "kind": "inspect",
+            "x": 300,
+            "y": 330,
+            "title": "단단한 글자",
+            "text": "굵은 글씨는 벽이다. 취소선은 존재를 불안정하게 만든다."
+          },
+          {
+            "id": "punctuate",
+            "kind": "inspect",
+            "x": 350,
+            "y": 680,
+            "title": "거부의 문장부호",
+            "text": "느낌표는 돌진한다. 물음표는 망설인다."
+          },
+          {
+            "id": "trust_bridge",
+            "kind": "inspect",
+            "x": 760,
+            "y": 480,
+            "title": "믿음의 다리",
+            "text": "나는 [　　　]를 믿었다."
+          },
+          {
+            "id": "betrayal_memory",
+            "kind": "inspect",
+            "x": 1180,
+            "y": 680,
+            "title": "등을 돌린 인형",
+            "text": "함께 싸웠는데. 믿었는데. 어째서?"
+          },
+          {
+            "id": "to_chapel",
+            "kind": "door",
+            "x": 1450,
+            "y": 480,
+            "title": "다음 장면",
+            "text": "다리를 건너고 기억을 확인하세요.",
+            "targetRoom": "chapel",
+            "spawn": {
+              "x": 180,
+              "y": 480
+            }
+          }
+        ],
+        "enemies": [
+          {
+            "id": "betrayal_chaser",
+            "typeId": "betrayal_enemy",
+            "x": 660,
+            "y": 300,
+            "patrol": {
+              "x": 660,
+              "y": 680
+            }
+          },
+          {
+            "id": "refusal_charger",
+            "typeId": "refusal_enemy",
+            "x": 380,
+            "y": 750,
+            "patrol": {
+              "x": 600,
+              "y": 750
+            }
+          }
+        ],
+        "whispers": []
+      },
+      {
+        "id": "chapel",
+        "name": "응답 없는 예배당",
+        "subtitle": "II · 텍스트는 세계의 법칙이다",
+        "objective": "부정어를 떼어 내고 문을 여세요. 제단의 봉인은 혼자 풀 수 없습니다.",
+        "palette": [
+          "#352a30",
+          "#a2393c",
+          "#e0cfa7"
+        ],
+        "width": 1600,
+        "height": 960,
+        "start": {
+          "x": 180,
+          "y": 480
+        },
+        "backgroundImage": "/assets/prologue/chapel.svg",
+        "obstacles": [
+          {
+            "x": 1050,
+            "y": 44,
+            "w": 100,
+            "h": 376
+          },
+          {
+            "x": 1050,
+            "y": 540,
+            "w": 100,
+            "h": 376
+          }
+        ],
+        "objects": [
+          {
+            "id": "back_betrayal",
+            "kind": "door",
+            "x": 120,
+            "y": 480,
+            "title": "이전 장면",
+            "text": "배신의 회랑으로 돌아간다.",
+            "targetRoom": "betrayal",
+            "spawn": {
+              "x": 1350,
+              "y": 480
+            }
+          },
+          {
+            "id": "sealed_belief",
+            "kind": "inspect",
+            "x": 540,
+            "y": 230,
+            "title": "신성한 신념",
+            "text": "나는 태양의 신을 믿는다.\n태양의 신은 나를 지켜줄 것이다."
+          },
+          {
+            "id": "detach_denial",
+            "kind": "inspect",
+            "x": 600,
+            "y": 600,
+            "title": "붙어 있는 부정",
+            "text": "아니야 — 여기가 출구다."
+          },
+          {
+            "id": "door_sentence",
+            "kind": "inspect",
+            "x": 880,
+            "y": 650,
+            "title": "응답하지 않는 문",
+            "text": "이 문은 절대로 열리지 않는다."
+          },
+          {
+            "id": "altar_seal",
+            "kind": "inspect",
+            "x": 1270,
+            "y": 480,
+            "title": "신성한 봉인",
+            "text": "하지만 신은 응답하지 않았다."
+          },
+          {
+            "id": "to_altar",
+            "kind": "door",
+            "x": 1470,
+            "y": 480,
+            "title": "이름 없는 제단으로",
+            "text": "봉인 뒤의 종이 공간이 접혀 있다.",
+            "targetRoom": "altar",
+            "spawn": {
+              "x": 180,
+              "y": 480
+            }
+          }
+        ],
+        "enemies": [],
+        "whispers": []
+      },
+      {
+        "id": "altar",
+        "name": "이름 없는 제단",
+        "subtitle": "III · 텍스트는 정체성이다",
+        "objective": "세 문장을 조사하고 순서를 바꿔 보세요. 마지막 한 줄에 손을 대세요.",
+        "palette": [
+          "#352a30",
+          "#a2393c",
+          "#e0cfa7"
+        ],
+        "width": 1600,
+        "height": 960,
+        "start": {
+          "x": 180,
+          "y": 480
+        },
+        "backgroundImage": "/assets/prologue/altar.svg",
+        "obstacles": [],
+        "objects": [
+          {
+            "id": "back_chapel",
+            "kind": "door",
+            "x": 120,
+            "y": 480,
+            "title": "이전 장면",
+            "text": "응답 없는 예배당으로 돌아간다.",
+            "targetRoom": "chapel",
+            "spawn": {
+              "x": 1360,
+              "y": 480
+            }
+          },
+          {
+            "id": "order_thoughts",
+            "kind": "inspect",
+            "x": 350,
+            "y": 700,
+            "title": "사고의 순서",
+            "text": "처음 두 문장의 순서를 바꾸면 무대도 바뀐다."
+          },
+          {
+            "id": "identity_belief",
+            "kind": "inspect",
+            "x": 800,
+            "y": 290,
+            "title": "믿음의 대상",
+            "text": "나는 태양의 신을 섬긴다."
+          },
+          {
+            "id": "identity_judgment",
+            "kind": "inspect",
+            "x": 800,
+            "y": 480,
+            "title": "심판의 대상",
+            "text": "나는 신의 적을 심판한다."
+          },
+          {
+            "id": "identity_mission",
+            "kind": "inspect",
+            "x": 800,
+            "y": 670,
+            "title": "남겨진 사명",
+            "text": "나는 나의 사명을 완수해야 한다."
+          }
+        ],
+        "enemies": [],
+        "whispers": []
+      }
+    ]
+  },
+  "texts": [
+    {
+      "id": "absolute_wall",
+      "roomId": "betrayal",
+      "text": "절대로",
+      "x": 460,
+      "y": 160,
+      "w": 100,
+      "h": 640,
+      "format": "bold",
+      "stateKey": "wall"
+    },
+    {
+      "id": "ghost_wall",
+      "roomId": "betrayal",
+      "text": "거짓",
+      "x": 610,
+      "y": 560,
+      "w": 180,
+      "h": 80,
+      "format": "strike"
+    },
+    {
+      "id": "trust_path",
+      "roomId": "betrayal",
+      "text": "나는 동료를 믿었다.",
+      "x": 900,
+      "y": 420,
+      "w": 120,
+      "h": 120,
+      "format": "underline",
+      "stateKey": "bridge"
+    },
+    {
+      "id": "memory_bracket",
+      "roomId": "betrayal",
+      "text": "( 함께 싸웠는데. )",
+      "x": 1080,
+      "y": 600,
+      "w": 280,
+      "h": 120,
+      "format": "bracket"
+    },
+    {
+      "id": "denial_block",
+      "roomId": "chapel",
+      "text": "아니야",
+      "x": 720,
+      "y": 420,
+      "w": 85,
+      "h": 120,
+      "format": "bold",
+      "stateKey": "negation"
+    },
+    {
+      "id": "door_block",
+      "roomId": "chapel",
+      "text": "절대로",
+      "x": 1050,
+      "y": 420,
+      "w": 100,
+      "h": 120,
+      "format": "bold",
+      "stateKey": "door"
+    },
+    {
+      "id": "sealed_paper",
+      "roomId": "chapel",
+      "text": "나는 태양의 신을 믿는다.",
+      "x": 1180,
+      "y": 200,
+      "w": 330,
+      "h": 85,
+      "format": "bold",
+      "stateKey": "seal"
+    },
+    {
+      "id": "resistance_wall",
+      "roomId": "altar",
+      "text": "거짓말.",
+      "x": 510,
+      "y": 350,
+      "w": 120,
+      "h": 260,
+      "format": "bold",
+      "stateKey": "identity"
+    },
+    {
+      "id": "resistance_doubt",
+      "roomId": "altar",
+      "text": "나는 누구인가?",
+      "x": 1050,
+      "y": 550,
+      "w": 300,
+      "h": 60,
+      "format": "plain",
+      "stateKey": "identity"
+    }
+  ],
+  "sentenceRules": [
+    {
+      "id": "wall_rule",
+      "objectId": "format_wall",
+      "title": "단어의 형태를 바꾸기",
+      "kind": "format",
+      "stateKey": "wall",
+      "options": [
+        {
+          "id": "solid",
+          "label": "굵은 글씨",
+          "text": "절대로",
+          "value": "solid",
+          "resultId": "wall_rule_solid"
+        },
+        {
+          "id": "crossed",
+          "label": "취소선",
+          "text": "절대로",
+          "value": "crossed",
+          "resultId": "wall_rule_crossed"
+        }
+      ]
+    },
+    {
+      "id": "bridge_rule",
+      "objectId": "trust_bridge",
+      "title": "나는 [　　　]를 믿었다.",
+      "kind": "insert",
+      "stateKey": "bridge",
+      "options": [
+        {
+          "id": "empty",
+          "label": "빈칸",
+          "text": "나는 [　　　]를 믿었다.",
+          "value": "folded",
+          "resultId": "bridge_rule_empty"
+        },
+        {
+          "id": "companion",
+          "label": "동료",
+          "text": "나는 동료를 믿었다.",
+          "value": "open",
+          "resultId": "bridge_rule_companion",
+          "keywordId": "companion"
+        }
+      ]
+    },
+    {
+      "id": "punctuation_rule",
+      "objectId": "punctuate",
+      "title": "거부의 문장부호",
+      "kind": "punctuation",
+      "stateKey": "punctuation",
+      "options": [
+        {
+          "id": "exclaim",
+          "label": "느낌표 !",
+          "text": "싫어!",
+          "value": "exclaim",
+          "resultId": "punctuation_rule_exclaim"
+        },
+        {
+          "id": "question",
+          "label": "물음표 ?",
+          "text": "싫어?",
+          "value": "question",
+          "resultId": "punctuation_rule_question"
+        }
+      ]
+    },
+    {
+      "id": "denial_rule",
+      "objectId": "detach_denial",
+      "title": "문장에 붙은 부정어",
+      "kind": "detach",
+      "stateKey": "negation",
+      "options": [
+        {
+          "id": "attached",
+          "label": "붙여 두기",
+          "text": "아니야 — 여기가 출구다.",
+          "value": "attached",
+          "resultId": "denial_rule_attached"
+        },
+        {
+          "id": "detached",
+          "label": "부정어 분리",
+          "text": "여기가 출구다.",
+          "value": "detached",
+          "resultId": "denial_rule_detached"
+        }
+      ]
+    },
+    {
+      "id": "door_rule",
+      "objectId": "door_sentence",
+      "title": "문장을 바꾸면 문이 바뀐다",
+      "kind": "replace",
+      "stateKey": "door",
+      "options": [
+        {
+          "id": "closed",
+          "label": "절대로 열리지 않는다",
+          "text": "이 문은 절대로 열리지 않는다.",
+          "value": "closed",
+          "resultId": "door_rule_closed"
+        },
+        {
+          "id": "waiting",
+          "label": "잠시 후 열린다",
+          "text": "이 문은 잠시 후 열린다.",
+          "value": "waiting",
+          "resultId": "door_rule_waiting",
+          "delayMs": 4000
+        },
+        {
+          "id": "open",
+          "label": "이미 열려 있다",
+          "text": "이 문은 이미 열려 있다.",
+          "value": "open",
+          "resultId": "door_rule_open"
+        }
+      ]
+    },
+    {
+      "id": "order_rule",
+      "objectId": "order_thoughts",
+      "title": "처음 두 사고의 순서",
+      "kind": "reorder",
+      "stateKey": "order",
+      "options": [
+        {
+          "id": "original",
+          "label": "믿음 → 심판",
+          "text": "나는 태양의 신을 섬긴다.\n나는 신의 적을 심판한다.",
+          "value": "original",
+          "resultId": "order_rule_original"
+        },
+        {
+          "id": "swapped",
+          "label": "심판 → 믿음",
+          "text": "나는 신의 적을 심판한다.\n나는 태양의 신을 섬긴다.",
+          "value": "swapped",
+          "resultId": "order_rule_swapped"
+        }
+      ]
+    }
+  ],
+  "narration": {
+    "memory": [
+      "아하, 이제 알겠군요! 이 가엾은 양의 마음에는 배신이라는 단어가 아주 깊숙이 박혀 있네요.",
+      "정말이지, 인간이란 얼마나 어리석은 생물인지! 타인을 믿을 수 있다고 생각하다니 말이에요!",
+      "자, 관객 분. 다음 장면으로 넘어가 볼까요?"
+    ],
+    "seal": [
+      "어머나! 꽤나 독실한 신도인 모양이에요.",
+      "하지만 이런 낡아빠진 맹세 때문에 이야기가 멈춰서야 되겠어요?",
+      "관객 분, 제가 조금 도와드릴까요?"
+    ],
+    "resistance": [
+      "아아, 또다시 거부하는군요! 참으로 완고한 아이이지 않나요?",
+      "하지만 걱정 마세요. 관객 분이 직접 모든 걸 해결해야 할 필요는 없답니다.",
+      "자, 이제 마지막 한 줄만 고쳐볼까요?"
+    ]
+  },
+  "reverseMemory": "신은 나를 버리지 않았다.",
+  "resistanceTexts": [
+    "아니야.",
+    "거짓말.",
+    "나는 누구인가?",
+    "나는 신을 섬긴다."
+  ]
+}

@@ -12,7 +12,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean
 }
 const root = createRoot(document.getElementById('root')!);
 // Dynamic loading also catches content validation errors raised at module load.
-import('./App').then(({ default: App }) => {
+import('./prologue/PrologueApp').then(({ default: App }) => {
   root.render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>);
 }).catch((error: unknown) => {
   console.error(error);

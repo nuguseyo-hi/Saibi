@@ -3,8 +3,8 @@ import { createDraft, editedSentence, optionFor, originalSentence } from '../dom
 import type { EditDraft, MindEvent } from '../domain/mind/editing';
 import { Sigil } from '../components/Scene';
 
-interface Props { event: MindEvent; characterName: string; error: string | null; confirm: (draft: EditDraft) => void; cancel: () => void }
-export function MindEditScreen({ event, characterName, error, confirm, cancel }: Props) {
+interface Props { cancelHint?: string; event: MindEvent; characterName: string; error: string | null; confirm: (draft: EditDraft) => void; cancel: () => void }
+export function MindEditScreen({ event, characterName, error, confirm, cancel, cancelHint }: Props) {
   // Draft lives only in this mounted screen. Navigating away or reloading discards it.
   const [draft, setDraft] = useState(() => createDraft(event));
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,6 +38,6 @@ export function MindEditScreen({ event, characterName, error, confirm, cancel }:
     <details className="mind-preview"><summary>확정될 문장 미리보기</summary><p>{preview || '모든 문장이 삭제됩니다.'}</p></details>
     {error && <p className="action-error" role="alert">{error}</p>}
     <div className="mind-actions"><button className="text-button" onClick={() => { setDraft(createDraft(event)); setSelected(null); }}>모두 원문으로</button><div><button className="secondary-button" onClick={cancel}>편집 취소</button><button className="primary-button" onClick={() => confirm(draft)}>편집 확정 <span aria-hidden="true">→</span></button></div></div>
-    <p className="mind-footnote">확정해야 기억과 이후 대화에 반영됩니다. 취소하면 원래 고해성사로 돌아갑니다.</p>
+    <p className="mind-footnote">{cancelHint ?? '확정해야 기억과 이후 대화에 반영됩니다. 취소하면 원래 고해성사로 돌아갑니다.'}</p>
   </section>;
 }

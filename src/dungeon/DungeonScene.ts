@@ -1,9 +1,15 @@
 import Phaser from 'phaser';
 import { COLLAGE_FONT, PaperLabel, cutoutWord } from './collage';
 import { direction, objectAvailable, safePosition } from './model';
-import type { DungeonData, DungeonProgress, DungeonObject, Point, EnemyType } from './model';
+import type { DungeonData, DungeonProgress, DungeonObject, Point, EnemyType, RoomData } from './model';
 
+export interface DungeonExtension { update: () => void }
 export interface DungeonBridge {
+  reducedMotion?: () => boolean;
+  extend?: (scene: Phaser.Scene, player: Phaser.Physics.Arcade.Image, room: RoomData) => DungeonExtension;
+  enemyQuestion?: (id: string) => boolean;
+  exitAllowed?: (id: string) => boolean;
+  syncPositionKey?: () => string | number;
   read: () => DungeonProgress;
   paused: () => boolean;
   interact: (object: DungeonObject, position: Point) => void;
@@ -13,7 +19,7 @@ export interface DungeonBridge {
   ready: () => void;
   sound: (cue: 'door' | 'hit' | 'inspect') => void;
 }
-interface EnemyRuntime { id: string; type: EnemyType; body: Phaser.Physics.Arcade.Image; label: Phaser.GameObjects.Container; shadow: Phaser.GameObjects.Container; home: Point; patrol: Point; reverse: boolean; state: 'patrol' | 'windup' | 'charge' | 'rest'; until: number; vector: Point }
+interface EnemyRuntime { id: string; type: EnemyType; body: Phaser.Physics.Arcade.Image; label: Phaser.GameObjects.Container; shadow: Phaser.GameObjects.Container; home: Point; patrol: Point; reverse: boolean; state: 'patrol' | 'windup' | 'charge' | 'rest'; until: number; vector: Point; questionSince?: number }
 export class DungeonScene extends Phaser.Scene {
   private dataDef: DungeonData;
   private bridge: DungeonBridge;
@@ -28,6 +34,8 @@ export class DungeonScene extends Phaser.Scene {
   private elapsed = 0;
   private transitioning = false;
   private reduced = false;
+  private extension?: DungeonExtension;
+  private positionKey:string|number=0;
   constructor(data: DungeonData, bridge: DungeonBridge) { super('MindDungeon'); this.dataDef = data; this.bridge = bridge; }
   preload() {
     for(const key of ['paper','scrap','eye','bell','letter','traveler']) if(!this.textures.exists(key)) this.load.image(key,`/assets/dungeon/${key}.svg`);
@@ -40,7 +48,7 @@ export class DungeonScene extends Phaser.Scene {
     const room=this.dataDef.rooms.find(r=>r.id===progress.roomId)!;
     this.physics.world.isPaused=false;this.tweens.timeScale=1;
     this.roomId=room.id;this.enemies=[];this.marks=[];this.lastNearby=null;this.elapsed=0;this.transitioning=false;
-    this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.reduced=this.bridge.reducedMotion?.()??window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const ink=Phaser.Display.Color.HexStringToColor(room.palette[0]).color, red=Phaser.Display.Color.HexStringToColor(room.palette[1]).color;
     this.cameras.main.setBackgroundColor(ink);
     this.physics.world.setBounds(44,44,room.width-88,room.height-88);
@@ -139,7 +147,7 @@ export class DungeonScene extends Phaser.Scene {
       const e:EnemyRuntime={id:spawn.id,type,body,label,shadow,home:{x:spawn.x,y:spawn.y},patrol:spawn.patrol,reverse:false,state:'patrol',until:0,vector:{x:0,y:0}};
       this.enemies.push(e);this.physics.add.collider(body,walls);
       this.physics.add.overlap(this.player,body,()=>{
-        if(this.bridge.paused() || this.transitioning)return;
+        if(this.bridge.paused() || this.transitioning || this.bridge.enemyQuestion?.(e.id))return;
         const before=this.bridge.read().stability;
         this.bridge.hit(e.id,this.position(),Date.now());
         if(this.bridge.read().stability<before) { e.state='rest';e.until=this.elapsed+type.cooldownMs;this.bridge.sound('hit');if(!this.reduced)this.cameras.main.shake(130,.004); }
@@ -150,12 +158,17 @@ export class DungeonScene extends Phaser.Scene {
     this.game.events.on(Phaser.Core.Events.BLUR,reset);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{this.game.events.off(Phaser.Core.Events.BLUR,reset);this.bridge.nearby(null);});
     this.cameras.main.fadeIn(this.reduced?0:400,15,13,23);
+    this.extension=this.bridge.extend?.(this,this.player,room);
+    this.positionKey=this.bridge.syncPositionKey?.()??0;
     this.bridge.ready();
   }
   position(): Point { return this.player ? {x:this.player.x,y:this.player.y} : this.bridge.read().position; }
   update(_time:number,delta:number) {
     if(!this.player)return;
     const progress=this.bridge.read();
+    const positionKey=this.bridge.syncPositionKey?.()??0;
+    if(positionKey!==this.positionKey){this.positionKey=positionKey;this.player.setPosition(progress.position.x,progress.position.y);}
+    this.extension?.update();
     if(progress.roomId!==this.roomId) {
       if(!this.transitioning) { this.transitioning=true;this.player.setVelocity(0);this.bridge.sound('door');this.cameras.main.fadeOut(this.reduced?1:220,15,13,23);this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,()=>this.scene.restart()); }
       return;
@@ -174,7 +187,7 @@ export class DungeonScene extends Phaser.Scene {
     const candidates=this.marks.filter(m=>m.object.kind!=='fragment'||!progress.fragments.includes(m.object.fragmentId!));
     const near=candidates.sort((a,b)=>Phaser.Math.Distance.Between(this.player.x,this.player.y,a.object.x,a.object.y)-Phaser.Math.Distance.Between(this.player.x,this.player.y,b.object.x,b.object.y)).find(m=>Phaser.Math.Distance.Between(this.player.x,this.player.y,m.object.x,m.object.y)<=this.dataDef.rules.interactionRadius);
     for(const m of this.marks) {
-      const available=objectAvailable(progress,m.object), collected=m.object.fragmentId && progress.fragments.includes(m.object.fragmentId);
+      const available=objectAvailable(progress,m.object) && (this.bridge.exitAllowed?.(m.object.id)??true), collected=m.object.fragmentId && progress.fragments.includes(m.object.fragmentId);
       m.image.setAlpha(collected ? .3 : available ? 1 : .45);
       m.label.setText(collected?'획득한 기억':m.object.kind==='door'?(available?'열린 문 · E':'잠긴 문'):m.object.title);
       m.label.setColor(near===m?'#8b2633':'#352b25');
@@ -185,7 +198,14 @@ export class DungeonScene extends Phaser.Scene {
     for(const e of this.enemies) {
       const distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,e.body.x,e.body.y);
       let velocity={x:0,y:0};
-      if(e.state==='rest') { if(this.elapsed>=e.until)e.state='patrol'; }
+      if(this.bridge.enemyQuestion?.(e.id)) {
+        e.questionSince??=this.elapsed;
+        e.state='rest';e.until=this.elapsed+500;
+        const target=e.reverse?e.home:e.patrol;
+        if(Phaser.Math.Distance.Between(e.body.x,e.body.y,target.x,target.y)<20)e.reverse=!e.reverse;
+        velocity=this.elapsed-e.questionSince<2200?{x:0,y:0}:direction(target.x-e.body.x,target.y-e.body.y,e.type.speed*.2);
+      }
+      else if(e.state==='rest') { if(this.elapsed>=e.until)e.state='patrol'; }
       else if(e.state==='windup') { if(this.elapsed>=e.until){e.state='charge';e.until=this.elapsed+e.type.chargeMs;e.vector=direction(this.player.x-e.body.x,this.player.y-e.body.y,e.type.speed*3.6);} }
       else if(e.state==='charge') { velocity=e.vector;if(this.elapsed>=e.until){e.state='rest';e.until=this.elapsed+e.type.cooldownMs;velocity={x:0,y:0};} }
       else if(e.type.behavior==='charge'&&distance<e.type.detection) { e.state='windup';e.until=this.elapsed+e.type.windupMs; }
@@ -195,6 +215,10 @@ export class DungeonScene extends Phaser.Scene {
         else if(Phaser.Math.Distance.Between(e.body.x,e.body.y,target.x,target.y)<20)e.reverse=!e.reverse;
         velocity=direction(target.x-e.body.x,target.y-e.body.y,e.type.speed);
       }
+      const question=this.bridge.enemyQuestion?.(e.id)??false;
+      if(!question)e.questionSince=undefined;
+      const last=e.label.list.at(-1);
+      if(last instanceof Phaser.GameObjects.Container && e.type.behavior==='charge') for(const child of last.list) if(child instanceof Phaser.GameObjects.Text && (child.text==='!'||child.text==='?')) child.setText(question?'?':'!');
       e.body.setVelocity(velocity.x,velocity.y);
       const shake=this.reduced?0:Math.sin(this.elapsed/65+e.home.x)*2;
       e.label.setAlpha(e.state==='windup'&&!this.reduced ? .55+.45*Math.abs(Math.sin(this.elapsed/100)) : 1);

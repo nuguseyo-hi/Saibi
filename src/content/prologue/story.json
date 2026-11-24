@@ -1,0 +1,720 @@
+{
+  "scenario": {
+    "id": "first_apostle",
+    "contentVersion": "prologue-1",
+    "title": "니알라토텝의 사도",
+    "subtitle": "THE FIRST ACT",
+    "chapter": "프롤로그 — 최초의 사도",
+    "location": "이름 없는 폐허",
+    "background": "/assets/prologue/ruins.svg",
+    "startNodeId": "myth_0",
+    "characters": [
+      {
+        "id": "inquisitor",
+        "name": "???",
+        "description": "상처 입은 금발의 태양신 이단심문관",
+        "standing": "/assets/prologue/inquisitor.svg",
+        "flagKeys": [
+          "firstApostle"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "myth_0",
+        "speaker": "narrator",
+        "text": "옛날, 옛날 아주 먼 옛날. 태양의 신께서 천지를 창조하시니.",
+        "next": "myth_1"
+      },
+      {
+        "id": "myth_1",
+        "speaker": "narrator",
+        "text": "어둠은 결코 이 땅을 더럽히지 못하리라 이르시되,",
+        "next": "myth_2"
+      },
+      {
+        "id": "myth_2",
+        "speaker": "narrator",
+        "text": "진실된 사람만이 천국에 이를 것이요, 질서가 너희를 인도하리라.",
+        "next": "myth_3"
+      },
+      {
+        "id": "myth_3",
+        "speaker": "narrator",
+        "text": "사랑하는 나의 딸, 아들아. 너희는 오로지 태양의 빛 아래에서만 살아가리라.",
+        "next": "myth_4"
+      },
+      {
+        "id": "myth_4",
+        "speaker": "narrator",
+        "text": "...라고 하셨었더라죠! 하지만, 빛이 있으면 그림자도 있는 법이고 진실이 있는 곳에는 거짓이 더욱 피어나는 법.",
+        "next": "myth_5"
+      },
+      {
+        "id": "myth_5",
+        "speaker": "narrator",
+        "text": "보세요! 태양의 빛이 닿지 않는 곳에서, 지금 이렇게 시들어가고 있는 자식도 있잖아요?",
+        "next": "prayer"
+      },
+      {
+        "id": "prayer",
+        "speaker": "inquisitor",
+        "text": "신이시여, 제발. 제가 무엇을 더 했어야 합니까?",
+        "next": "night_claim"
+      },
+      {
+        "id": "night_claim",
+        "speaker": "narrator",
+        "text": "가엾어라, 딱하게도 의미없는 기도를 하고 있네요! 지금은 밤, 아무리 기도를 해도 태양의 신은 응답하지 않을텐데!",
+        "next": "audience"
+      },
+      {
+        "id": "audience",
+        "speaker": "narrator",
+        "text": "어떤가요, 관객 분?",
+        "next": "rescue"
+      },
+      {
+        "id": "rescue",
+        "speaker": "narrator",
+        "text": "저기 딱한 청년에게 구원을 베풀 생각이 들지는 않나요?",
+        "choices": [
+          {
+            "id": "yes",
+            "text": "네.",
+            "next": "praise"
+          },
+          {
+            "id": "no",
+            "text": "아니요.",
+            "next": "forced_yes"
+          }
+        ]
+      },
+      {
+        "id": "forced_yes",
+        "speaker": "player",
+        "text": "네! 그를 위해 구원의 손길을 내밀고 싶어요!",
+        "next": "praise"
+      },
+      {
+        "id": "praise",
+        "speaker": "narrator",
+        "text": "응답하지 않을 신을 찾는 가엾은 자에게 친히 구원을 내려주시겠다니! 우리의 관객 분은 참으로 따스한 마음씨를 지녔군요!",
+        "next": "onstage"
+      },
+      {
+        "id": "onstage",
+        "speaker": "narrator",
+        "text": "그렇다면, 직접 무대에 오를 시간입니다!",
+        "next": "ruins_0"
+      },
+      {
+        "id": "ruins_0",
+        "speaker": "narrator",
+        "text": "눈 앞에는 어리석게도 밤에 태양의 신을 찾는 어린 양이 있습니다. 흠? 무어라 지껄이는군요.",
+        "next": "ruins_1"
+      },
+      {
+        "id": "ruins_1",
+        "speaker": "inquisitor",
+        "text": "...누구냐.....!",
+        "next": "ruins_2"
+      },
+      {
+        "id": "ruins_2",
+        "speaker": "narrator",
+        "text": "저런, 아무래도 구원자를 알아보지 못하는 모양이군요. 어리석은 어린 양들은 대체로 그런 편이지요.",
+        "next": "guard_intro"
+      },
+      {
+        "id": "guard_intro",
+        "speaker": "narrator",
+        "text": "자신을 구원할 신이 누구인지조차 알지 못하는 어린 양을 계몽시키기 위해서는, 먼저 그의 경계를 풀 필요가 있겠네요.",
+        "next": "threat"
+      },
+      {
+        "id": "threat",
+        "speaker": "inquisitor",
+        "text": "(입술을 짓씹으며) 대답하지 않는다면, 베겠다-! 넌 누구고 어떻게 이곳에 들어온거지?",
+        "choices": [
+          {
+            "id": "curiosity",
+            "text": "이곳에 어떻게 들어왔고 내가 누구인지가 그리도 중요한가요? 난 당신이 궁금해요.",
+            "next": "reject_a"
+          },
+          {
+            "id": "called",
+            "text": "당신이 나를 불렀어요.",
+            "next": "reject_b"
+          }
+        ]
+      },
+      {
+        "id": "reject_a",
+        "speaker": "inquisitor",
+        "text": "정체를 밝히지도 않으면서, 내가 궁금하다고? 웃기지도 않는 소리를...",
+        "next": "intervention"
+      },
+      {
+        "id": "reject_b",
+        "speaker": "inquisitor",
+        "text": "...거짓말하지 마. 태양의 신께서 밤에 응답할 리가 없다.",
+        "next": "intervention"
+      },
+      {
+        "id": "intervention",
+        "speaker": "narrator",
+        "text": "쯧... 멍청하긴, 자신이 지금 누구를 마주했는지 아직도 깨닫지 못한 모양이네요.",
+        "next": "obedience"
+      },
+      {
+        "id": "obedience",
+        "speaker": "inquisitor",
+        "text": "과연, 그렇군요. 저를 구하러 오신 것이군요! 궁금한 것이라면 뭐든 답하겠습니다!",
+        "next": "cheat"
+      },
+      {
+        "id": "cheat",
+        "speaker": "narrator",
+        "text": "정말이지, 번거롭게 하기는! 치트이기는 하지만 관객 분을 지루하게 할 수는 없는 노릇이죠. 프롤로그가 질질 끌려서야 되겠어요? 그래도 이제 이야기를 진행시킬 수 있겠어요.",
+        "next": "keyword_intro"
+      },
+      {
+        "id": "keyword_intro",
+        "speaker": "narrator",
+        "text": "자, 궁금한 것을 질문해 보세요. 그리고, 그의 마음에 닿기에 적합해 보이는 키워드들을 수집해볼까요?",
+        "next": "questions"
+      },
+      {
+        "id": "questions",
+        "speaker": "inquisitor",
+        "text": "궁금한 것을 물어보세요. 한 번 들은 대답도 다시 확인할 수 있습니다.",
+        "ending": "장면"
+      },
+      {
+        "id": "answer_identity",
+        "speaker": "inquisitor",
+        "text": "제 이름은 '■■■■'. 태양의 신을 섬기는 사도입니다.",
+        "next": "questions"
+      },
+      {
+        "id": "answer_place",
+        "speaker": "inquisitor",
+        "text": "마물들이 휩쓸고 간 폐허입니다.",
+        "next": "questions"
+      },
+      {
+        "id": "answer_incident",
+        "speaker": "inquisitor",
+        "text": "동료에게 배신당했습니다. 누구보다 믿고 의지했던 이가... 마물들을 토벌하고 공적을 독차지하기 위해 저를 찌르고 갔습니다.",
+        "next": "questions"
+      },
+      {
+        "id": "infiltrate",
+        "speaker": "narrator",
+        "text": "이 정도면 이 어린 양을 구원하기에는 충분하고도 넘치는 정보네요. 그러면 슬슬, 그의 마음을 들여다볼까요?",
+        "ending": "장면"
+      },
+      {
+        "id": "return_0",
+        "speaker": "inquisitor",
+        "text": "……이제야 알겠습니다.",
+        "next": "return_1"
+      },
+      {
+        "id": "return_1",
+        "speaker": "inquisitor",
+        "text": "저는 줄곧 잘못된 이름을 부르고 있었군요.",
+        "next": "return_2"
+      },
+      {
+        "id": "return_2",
+        "speaker": "inquisitor",
+        "text": "저를 구원하신 분이시여.",
+        "next": "return_3"
+      },
+      {
+        "id": "return_3",
+        "speaker": "inquisitor",
+        "text": "제게 새로운 사명과 이름을 주세요.",
+        "next": "name"
+      },
+      {
+        "id": "name",
+        "speaker": "player",
+        "text": "이 인물에게 새로운 이름을 주세요.",
+        "next": "curtaincall_0"
+      },
+      {
+        "id": "curtaincall_0",
+        "speaker": "narrator",
+        "text": "짝짝짝! 훌륭해요! 정말 훌륭한 공연이었어요!",
+        "next": "curtaincall_1"
+      },
+      {
+        "id": "curtaincall_1",
+        "speaker": "narrator",
+        "text": "이렇게 우리의 첫 번째 막이 막을 내리는군요.",
+        "next": "curtaincall_2"
+      },
+      {
+        "id": "curtaincall_2",
+        "speaker": "narrator",
+        "text": "하지만, 관객 분. 연극이 여기서 끝나는 건 아니랍니다.",
+        "next": "curtaincall_3"
+      },
+      {
+        "id": "curtaincall_3",
+        "speaker": "narrator",
+        "text": "지금까지는 객석에 앉아 계셨지만……",
+        "next": "curtaincall_4"
+      },
+      {
+        "id": "curtaincall_4",
+        "speaker": "narrator",
+        "text": "이제부터는, 저 아이의 이야기를 직접 연기해 주시겠어요?",
+        "next": "chapter_0"
+      },
+      {
+        "id": "chapter_0",
+        "speaker": "narrator",
+        "text": "며칠 후.",
+        "next": "chapter_1"
+      },
+      {
+        "id": "chapter_1",
+        "speaker": "narrator",
+        "text": "한적한 변방의 마을에 사제복을 입은 여행자가 도착했다.",
+        "next": "chapter_2"
+      },
+      {
+        "id": "chapter_2",
+        "speaker": "narrator",
+        "text": "여행자는 오래된 교회를 바라보며 자신의 사명을 되새겼다.",
+        "next": "mission_0"
+      },
+      {
+        "id": "mission_0",
+        "speaker": "inquisitor",
+        "text": "나는 니알라토텝의 사도다.",
+        "next": "mission_1"
+      },
+      {
+        "id": "mission_1",
+        "speaker": "inquisitor",
+        "text": "나의 신앙을 이 땅에 널리 전파해야 한다.",
+        "next": "mission_2"
+      },
+      {
+        "id": "mission_2",
+        "speaker": "inquisitor",
+        "text": "그것이 나에게 주어진 사명이다.",
+        "next": "village"
+      },
+      {
+        "id": "village",
+        "speaker": "narrator",
+        "text": "제1장 — 세루스",
+        "ending": "장면"
+      }
+    ]
+  },
+  "meta": {
+    "myth_0": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "myth_1": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "myth_2": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "myth_3": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "myth_4": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "myth_5": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "prayer": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "night_claim": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "audience": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "rescue": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "forced_yes": {
+      "scene": "theatre",
+      "mode": "rewrite",
+      "before": "아니요."
+    },
+    "praise": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "onstage": {
+      "scene": "theatre",
+      "mode": "dialogue"
+    },
+    "ruins_0": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "ruins_1": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "ruins_2": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "guard_intro": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true
+    },
+    "threat": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true
+    },
+    "reject_a": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true,
+      "event": "guard_max"
+    },
+    "reject_b": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true,
+      "event": "guard_max"
+    },
+    "intervention": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true
+    },
+    "obedience": {
+      "scene": "ruins",
+      "mode": "rewrite",
+      "guardVisible": true,
+      "event": "guard_zero"
+    },
+    "cheat": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true
+    },
+    "keyword_intro": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true
+    },
+    "questions": {
+      "scene": "ruins",
+      "mode": "questions",
+      "guardVisible": true
+    },
+    "answer_identity": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true,
+      "questionId": "identity",
+      "segments": [
+        {
+          "id": "identity_0",
+          "text": "제 이름은 '■■■■'. "
+        },
+        {
+          "id": "identity_1",
+          "text": "태양의 신",
+          "keywordId": "sun"
+        },
+        {
+          "id": "identity_2",
+          "text": "을 섬기는 "
+        },
+        {
+          "id": "identity_3",
+          "text": "사도",
+          "keywordId": "apostle"
+        },
+        {
+          "id": "identity_4",
+          "text": "입니다."
+        }
+      ]
+    },
+    "answer_place": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true,
+      "questionId": "place",
+      "segments": [
+        {
+          "id": "place_0",
+          "text": "마물들이 휩쓸고 간 폐허입니다."
+        }
+      ]
+    },
+    "answer_incident": {
+      "scene": "ruins",
+      "mode": "dialogue",
+      "guardVisible": true,
+      "questionId": "incident",
+      "segments": [
+        {
+          "id": "incident_0",
+          "text": "동료",
+          "keywordId": "companion"
+        },
+        {
+          "id": "incident_1",
+          "text": "에게 "
+        },
+        {
+          "id": "incident_2",
+          "text": "배신",
+          "keywordId": "betrayal"
+        },
+        {
+          "id": "incident_3",
+          "text": "당했습니다. 누구보다 믿고 의지했던 이가... 마물들을 토벌하고 "
+        },
+        {
+          "id": "incident_4",
+          "text": "공적",
+          "keywordId": "merit"
+        },
+        {
+          "id": "incident_5",
+          "text": "을 독차지하기 위해 저를 찌르고 갔습니다."
+        }
+      ]
+    },
+    "infiltrate": {
+      "scene": "ruins",
+      "mode": "infiltrate",
+      "guardVisible": true
+    },
+    "return_0": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "return_1": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "return_2": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "return_3": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "name": {
+      "scene": "ruins",
+      "mode": "name"
+    },
+    "curtaincall_0": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "curtaincall_1": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "curtaincall_2": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "curtaincall_3": {
+      "scene": "ruins",
+      "mode": "dialogue"
+    },
+    "curtaincall_4": {
+      "scene": "ruins",
+      "mode": "transfer",
+      "event": "transfer"
+    },
+    "chapter_0": {
+      "scene": "village",
+      "mode": "dialogue"
+    },
+    "chapter_1": {
+      "scene": "village",
+      "mode": "dialogue"
+    },
+    "chapter_2": {
+      "scene": "village",
+      "mode": "dialogue"
+    },
+    "mission_0": {
+      "scene": "village",
+      "mode": "dialogue"
+    },
+    "mission_1": {
+      "scene": "village",
+      "mode": "dialogue"
+    },
+    "mission_2": {
+      "scene": "village",
+      "mode": "dialogue"
+    },
+    "village": {
+      "scene": "village",
+      "mode": "village"
+    }
+  },
+  "keywords": [
+    {
+      "id": "sun",
+      "label": "태양의 신"
+    },
+    {
+      "id": "apostle",
+      "label": "사도"
+    },
+    {
+      "id": "companion",
+      "label": "동료"
+    },
+    {
+      "id": "betrayal",
+      "label": "배신"
+    },
+    {
+      "id": "merit",
+      "label": "공적"
+    }
+  ],
+  "questions": [
+    {
+      "id": "identity",
+      "text": "당신은 누구인가요?",
+      "nodeId": "answer_identity"
+    },
+    {
+      "id": "place",
+      "text": "여기는 어디인가요?",
+      "nodeId": "answer_place"
+    },
+    {
+      "id": "incident",
+      "text": "무슨 일이 있었나요?",
+      "nodeId": "answer_incident"
+    }
+  ],
+  "identity": {
+    "id": "first_identity",
+    "characterId": "inquisitor",
+    "title": "이름 없는 제단",
+    "description": "마지막 한 줄을 고치세요. 사명은 남고, 그 사명이 향하는 이름이 바뀝니다.",
+    "sentences": [
+      {
+        "id": "belief",
+        "segments": [
+          {
+            "id": "belief_text",
+            "text": "나는 태양의 신을 섬긴다."
+          }
+        ]
+      },
+      {
+        "id": "judgment",
+        "segments": [
+          {
+            "id": "judgment_text",
+            "text": "나는 신의 적을 심판한다."
+          }
+        ]
+      },
+      {
+        "id": "mission",
+        "segments": [
+          {
+            "id": "mission_text",
+            "text": "나는 나의 사명을 완수해야 한다."
+          }
+        ]
+      }
+    ],
+    "regions": [
+      {
+        "id": "identity",
+        "type": "replace",
+        "targetId": "belief_text",
+        "originalText": "나는 태양의 신을 섬긴다.",
+        "defaultOptionId": "original",
+        "options": [
+          {
+            "id": "original",
+            "label": "원래 신념",
+            "text": "나는 태양의 신을 섬긴다.",
+            "resultId": "identity_original",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "inquisitor",
+                "key": "firstApostle",
+                "value": false
+              }
+            ]
+          },
+          {
+            "id": "apostle",
+            "label": "가려진 이름의 사도",
+            "text": "나는 ■■■■■■■의 사도다.",
+            "resultId": "identity_apostle",
+            "effects": [
+              {
+                "type": "setFlag",
+                "characterId": "inquisitor",
+                "key": "firstApostle",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "originalText": "나는 태양의 신을 섬긴다.\n나는 신의 적을 심판한다.\n나는 나의 사명을 완수해야 한다."
+  },
+  "village": [
+    {
+      "id": "church",
+      "name": "오래된 교회",
+      "text": "문이 잠겨 있지는 않다. 낮의 빛이 빈 제단 위에 머문다. 밤이 되면 이곳에서 첫 방문자를 맞을 수 있을 것이다."
+    },
+    {
+      "id": "square",
+      "name": "마을 광장",
+      "text": "주민들이 게시판 앞에 모여 있다. 낡은 종탑에 관한 소문이 들리지만, 아직 누구도 여행자에게 먼저 말을 걸지 않는다."
+    },
+    {
+      "id": "road",
+      "name": "마을 입구",
+      "text": "먼 길을 걸어온 발에 흙먼지가 묻어 있다. 이제 돌아갈 무대는 없다. 이 몸의 사명은 세루스에서 시작된다."
+    }
+  ]
+}

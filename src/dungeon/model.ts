@@ -85,7 +85,7 @@ export function parseDungeon(raw: unknown): DungeonData {
   if (!record(raw)) fail('root');
   for (const k of ['id','characterId','sourceNodeId','coreEventId','successNext']) if (!safeId(raw[k])) fail(k);
   const art=raw.art;
-  if (!record(art) || !['player','paper','door','fragment'].every(key => typeof art[key] === 'string' && /^\/assets\/[a-zA-Z0-9_/-]+\.(png|webp|jpg)$/.test(art[key] as string))) fail('art');
+  if (!record(art) || !['player','paper','door','fragment'].every(key => typeof art[key] === 'string' && /^\/assets\/[a-zA-Z0-9_/-]+\.(png|webp|jpg|svg)$/.test(art[key] as string))) fail('art');
   if (!nonempty(raw.name) || !record(raw.rules)) fail('name/rules');
   for (const key of ['initialGuard','maxGuard','maxAttempts','guardPenalty','stability','immunityMs','playerSpeed','interactionRadius']) if (!positive(raw.rules[key])) fail(`rules.${key}`);
   if (!Number.isInteger(raw.rules.stability) || !Number.isInteger(raw.rules.maxAttempts)) fail('integer rules');
@@ -96,7 +96,8 @@ export function parseDungeon(raw: unknown): DungeonData {
     if (!record(e) || !nonempty(e.text) || !['chase','charge'].includes(String(e.behavior))) fail('enemy'); id(e.id);
     for (const k of ['speed','detection','radius','damage','windupMs','chargeMs','cooldownMs']) if (!positive(e[k])) fail(`enemy.${k}`);
   }
-  for (const p of list(raw.puzzles, 'puzzles')) {
+  if (!Array.isArray(raw.puzzles)) fail('puzzles');
+  for (const p of raw.puzzles) {
     if (!record(p)) fail('puzzle'); id(p.id); id(p.regionId);
     for (const k of ['title','original','hint','defaultOption']) if (!nonempty(p[k])) fail(`puzzle.${k}`);
     if (typeof p.prefix !== 'string' || typeof p.suffix !== 'string') fail('puzzle text');
@@ -109,7 +110,7 @@ export function parseDungeon(raw: unknown): DungeonData {
   }
   for (const r of list(raw.rooms, 'rooms')) {
     if (!record(r) || !nonempty(r.name) || !nonempty(r.subtitle) || !nonempty(r.objective) || !positive(r.width) || !positive(r.height) || !point(r.start)) fail('room'); id(r.id);
-    if (r.backgroundImage !== undefined && (typeof r.backgroundImage !== 'string' || !/^\/assets\/[a-zA-Z0-9_/-]+\.(png|webp|jpg)$/.test(r.backgroundImage))) fail('background image');
+    if (r.backgroundImage !== undefined && (typeof r.backgroundImage !== 'string' || !/^\/assets\/[a-zA-Z0-9_/-]+\.(png|webp|jpg|svg)$/.test(r.backgroundImage))) fail('background image');
     if (!Array.isArray(r.palette) || r.palette.length < 3 || !r.palette.every(c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c))) fail('palette');
     if (!Array.isArray(r.whispers) || !r.whispers.every(nonempty) || !Array.isArray(r.obstacles) || !Array.isArray(r.enemies)) fail('room arrays');
     for (const o of r.obstacles) if (!point(o) || !record(o) || !positive(o.w) || !positive(o.h)) fail('obstacle');

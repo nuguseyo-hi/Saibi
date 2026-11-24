@@ -1,5 +1,7 @@
 # 기술 스택과 아키텍처
 
+> 최신 구현은 [프롤로그 구현 계약](PROLOGUE_IMPLEMENTATION.md)과 [프롤로그 원본 기획](PROLOGUE_BRIEF.md)을 따른다. 기존 에밀리아 시나리오·저장은 별도 경로로 유지한다.
+
 > 최신 심상던전 단계: [구현 계약·검증](DUNGEON_IMPLEMENTATION.md), [사용자 원본 기획](DUNGEON_BRIEF.md)을 우선한다. 아래 고해성사 단계와 초기 설계는 이력으로 유지한다. 현재 Phaser 3.90을 던전 탐험에 한해 추가했다. 던전의 핵심 편집 취소는 탐험으로, 확정은 결과 연출을 거쳐 고해성사로 돌아간다.
 
 상태: 전체 아키텍처 설계 제안. React, TypeScript, Vite, Tailwind CSS, Zustand, JSON 시나리오, localStorage 및 서버 없는 싱글플레이는 전체 프로젝트 요구사항이다. 후속 요청으로 타이틀·대화 초기 구현을 추가했다. 아래는 미래 확장을 포함한 제안이며 모든 구조가 현재 구현된 것은 아니다.
