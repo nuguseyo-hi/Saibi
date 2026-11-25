@@ -5,12 +5,13 @@ import { createPrologueStore, decodePrologue, PROLOGUE_SAVE_KEY } from '../src/p
 import { scenario, meta, dungeon, rules, texts, identityEvent, questions } from '../src/prologue/content.ts';
 import { initialEnvironment, applyRule, textPhysics, exitAvailable } from '../src/prologue/environment.ts';
 import { createDraft } from '../src/domain/mind/editing.ts';
+import { stageObject } from '../src/prologue/sideScroll.ts';
 import { validPosition } from '../src/dungeon/model.ts';
 type Store=ReturnType<typeof createPrologueStore>;
 function setup(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);}};return{values,storage,store:createPrologueStore(storage)};}
 function advanceTo(s:Store,id:string){for(let i=0;i<70&&s.getState().progress.nodeId!==id;i++){const p=s.getState().progress;s.getState().advance(p.nodeId);}assert.equal(s.getState().progress.nodeId,id);}
 function startDungeon(s:Store,rescue='no',answer='called',collect=true){s.getState().start();advanceTo(s,'rescue');s.getState().choose('rescue',rescue);if(rescue==='no')assert.equal(s.getState().progress.nodeId,'forced_yes');advanceTo(s,'threat');assert.equal(s.getState().progress.guard,90);s.getState().choose('threat',answer);assert.equal(s.getState().progress.guard,100);advanceTo(s,'obedience');assert.equal(s.getState().progress.guard,0);advanceTo(s,'questions');for(const q of questions){s.getState().ask(q.id);if(collect)for(const part of meta[q.nodeId].segments??[])if(part.keywordId){s.getState().collect(part.keywordId);s.getState().collect(part.keywordId);}s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();assert.equal(s.getState().progress.phase,'dungeon');}
-function object(s:Store,id:string){return dungeon.rooms.find(r=>r.id===s.getState().progress.dungeon.roomId)!.objects.find(o=>o.id===id)!;}
+function object(s:Store,id:string){return stageObject(dungeon.rooms.find(r=>r.id===s.getState().progress.dungeon.roomId)!.objects.find(o=>o.id===id)!,s.getState().progress.environment);}
 function inspect(s:Store,id:string){assert.equal(s.getState().inspect(id,object(s,id)),true);}
 function travel(s:Store,id:string){s.getState().travel(id,object(s,id));}
 function finishCue(s:Store){for(let i=0;i<4&&s.getState().progress.cue;i++)s.getState().cueNext();}

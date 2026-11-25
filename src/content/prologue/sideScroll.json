@@ -39,6 +39,15 @@
           "w": 48,
           "h": 310,
           "label": "절대로"
+        },
+        {
+          "key": "punctuation",
+          "open": "question",
+          "x": 1000,
+          "y": 310,
+          "w": 42,
+          "h": 310,
+          "label": "!"
         }
       ]
     },
@@ -127,7 +136,7 @@
       "insert": "companion",
       "remove": "empty",
       "keywordId": "companion",
-      "verb": "동료 끼우기",
+      "verb": "빈 문장에 말 끼우기",
       "restore": "동료 뽑기"
     },
     {
@@ -146,7 +155,7 @@
       "insert": "open",
       "remove": "closed",
       "keywordId": "merit",
-      "verb": "공적 끼우기",
+      "verb": "문의 조건에 말 끼우기",
       "restore": "공적 뽑기"
     },
     {
@@ -175,19 +184,51 @@
     "sealed": "봉인이 손을 밀어냅니다. 다시 E를 눌러 종이를 뒤집어 보세요.",
     "flipped": "뒷면의 기억이 드러났습니다. E로 나레이터의 손을 받아들이세요.",
     "finalReady": "마지막 문장을 끼웠습니다. R로 뽑거나 오른쪽 제단으로 걸어가세요.",
-    "finalLocked": "아직 마지막 문장이 완성되지 않았습니다."
+    "finalLocked": "아직 마지막 문장이 완성되지 않았습니다.",
+    "unchanged": "문장은 이미 그 상태입니다.",
+    "arrangeFirst": "먼저 두 사고의 걸이를 바꿔 신념을 드러내세요.",
+    "cacheEmpty": "이곳의 말은 이미 모두 기억하고 있습니다.",
+    "punctuation": "문장부호가 접히며 통로의 모양이 바뀝니다."
   },
   "scenery": {
     "caption": "기억은 종이보다 쉽게 찢어진다.",
     "altarCaption": "믿음     심판     사명",
     "abyss": "찢어진 기억",
     "originalOrder": "믿음\n     심판",
-    "swappedOrder": "심판\n     믿음"
+    "swappedOrder": "심판\n     믿음",
+    "sealBroken": "해체된 봉인 · 흔적 읽기"
   },
   "puppet": {
     "width": 76,
     "height": 130,
     "sourceHeight": 680,
     "footY": 634
+  },
+  "editTokens": {
+    "format_wall": "절대로",
+    "punctuate": "! ↔ ?",
+    "detach_denial": "아니야",
+    "order_thoughts": "믿음 ↔ 심판",
+    "identity_belief": "■■■■■■■",
+    "trust_bridge": "동료",
+    "door_sentence": "공적"
+  },
+  "editMessages": {
+    "format_wall": {
+      "insert": "금지의 활자를 뜯었습니다. 취소선 너머로 지나갈 수 있습니다.",
+      "remove": "금지의 활자를 다시 붙였습니다. 길이 막힙니다."
+    },
+    "punctuate": {
+      "insert": "외침을 물음으로 접었습니다. 문장부호의 벽이 풀립니다.",
+      "remove": "물음을 외침으로 돌렸습니다. 문장부호가 길을 막습니다."
+    },
+    "detach_denial": {
+      "insert": "부정어를 뜯었습니다. 남은 문장의 길이 열립니다.",
+      "remove": "부정어를 다시 붙였습니다. 길이 막힙니다."
+    },
+    "order_thoughts": {
+      "insert": "두 사고의 자리를 바꿨습니다. 드러난 신념에 손을 대세요.",
+      "remove": "두 사고를 원래 자리에 돌려놓았습니다."
+    }
   }
 }

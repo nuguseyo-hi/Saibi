@@ -3,6 +3,7 @@ import { dungeon, rules, STATE_VALUES } from './content.ts';
 import type { StateKey } from './content.ts';
 import type { EnvironmentState } from './environment.ts';
 import type { Point, Rect } from '../dungeon/model.ts';
+import type { DungeonObject } from '../dungeon/model.ts';
 export interface SideGate extends Rect {key:StateKey;open:string;label:string}
 export interface SideRoom {id:string;platforms:Rect[];bridge?:Rect;gates:SideGate[]}
 export interface DirectSlot {objectId:string;ruleId:string;mode:'word'|'toggle';insert:string;remove:string;keywordId?:string;verb:string;restore:string}
@@ -18,9 +19,29 @@ for(const room of raw.rooms){
 check(new Set(raw.slots.map(s=>s.objectId)).size===raw.slots.length,'slot IDs');
 for(const slot of raw.slots){const rule=rules.find(r=>r.id===slot.ruleId);check(rule&&rule.objectId===slot.objectId&&['word','toggle'].includes(slot.mode),'slot');for(const id of [slot.insert,slot.remove])check(rule.options.some(o=>o.id===id),'slot option');if(slot.mode==='word')check('keywordId' in slot&&rule.options.find(o=>o.id===slot.insert)?.keywordId===slot.keywordId,'word ownership');}
 check(raw.puppet.footY>0&&raw.puppet.footY<=raw.puppet.sourceHeight,'puppet baseline');
+check(Object.values(raw.editTokens).every(value=>typeof value==='string'&&value.length>0),'edit tokens');
+for(const feedback of Object.values(raw.editMessages))check(typeof feedback.insert==='string'&&typeof feedback.remove==='string','edit messages');
 export const puppetArt=raw.puppet;
 export const sideRooms=raw.rooms as SideRoom[],slots=raw.slots as DirectSlot[],physics=raw.physics,messages=raw.messages,identityText=raw.identity,scenery=raw.scenery;
 export const sideRoom=(id:string)=>sideRooms.find(r=>r.id===id)!;
+/** Stable thought IDs move with their sentences; interaction uses the same positions as art. */
+export function stageObject(object:DungeonObject,e:EnvironmentState):DungeonObject {
+ if(e.order!=='swapped'||!['identity_belief','identity_judgment'].includes(object.id))return object;
+ const partner=dungeon.rooms.find(r=>r.id==='altar')!.objects.find(o=>o.id===(object.id==='identity_belief'?'identity_judgment':'identity_belief'))!;
+ return {...object,x:partner.x};
+}
+export function thoughtText(id:string,e:EnvironmentState):string {
+ if(id==='identity_belief')return ['placed','rewritten'].includes(e.identity)?identityText.after:identityText.before;
+ return dungeon.rooms.find(r=>r.id==='altar')!.objects.find(o=>o.id===id)!.text;
+}
+export function editToken(objectId:string):string {
+ return raw.editTokens[objectId as keyof typeof raw.editTokens]??'';
+}
+export function editMessage(slot:DirectSlot,optionId:string):string {
+ const feedback:Record<string,{insert:string;remove:string}>=raw.editMessages;
+ const action=optionId===slot.remove?'remove':'insert';
+ return feedback[slot.objectId]?.[action]??(action==='remove'?messages.removed:messages.inserted);
+}
 export function surfaces(id:string,e:EnvironmentState):Rect[]{const r=sideRoom(id);return [...r.platforms,...(r.bridge&&e.bridge==='open'?[r.bridge]:[])];}
 export function closedGates(id:string,e:EnvironmentState){return sideRoom(id).gates.filter(g=>e[g.key]!==g.open);}
 export function slotInserted(slot:DirectSlot,e:EnvironmentState){const rule=rules.find(r=>r.id===slot.ruleId)!;return e[rule.stateKey]===rule.options.find(o=>o.id===slot.insert)!.value;}

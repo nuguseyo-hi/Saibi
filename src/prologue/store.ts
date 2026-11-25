@@ -9,7 +9,7 @@ import { record } from '../domain/validation.ts';
 import { scenario, meta, dungeon, keywords, questions, rules, identityEvent, STATE_VALUES, narration } from './content.ts';
 import { applyRule, initialEnvironment, exitAvailable } from './environment.ts';
 import type { EnvironmentState } from './environment.ts';
-import { safeSidePosition, slots, slotOption, messages, identityText } from './sideScroll.ts';
+import { safeSidePosition, slots, slotOption, messages, identityText, stageObject, editMessage } from './sideScroll.ts';
 export const PROLOGUE_SAVE_KEY='saibi.prologue.v1';
 export interface PrologueState {
  phase:'story'|'dungeon'|'core'|'village'|'church';nodeId:string;guard:number;questions:string[];keywords:string[];
@@ -64,7 +64,7 @@ export function createPrologueStore(storage?:StorageLike) {
    if(m.mode==='village')next.phase='village';
    return next;
   };
-  const near=(id:string,point:Point)=>{const p=get().progress,r=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;const o=r.objects.find(o=>o.id===id);return ['dungeon','core'].includes(p.phase)&&!p.cue&&p.dungeon.stability>0&&validPosition(point,r)&&o&&Math.hypot(point.x-o.x,point.y-o.y)<=dungeon.rules.interactionRadius+8?o:null;};
+  const near=(id:string,point:Point)=>{const p=get().progress,r=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;const source=r.objects.find(o=>o.id===id),o=source?stageObject(source,p.environment):null;return ['dungeon','core'].includes(p.phase)&&!p.cue&&p.dungeon.stability>0&&validPosition(point,r)&&o&&Math.hypot(point.x-o.x,point.y-o.y)<=dungeon.rules.interactionRadius+8?o:null;};
   const event=(events:string[],id:string)=>events.includes(id)?events:[...events,id];
   return {progress:loaded??initial(),hasSave:!!loaded,error,actionError:null,
    start:()=>persist(initial()),
@@ -82,8 +82,8 @@ export function createPrologueStore(storage?:StorageLike) {
     if(o.kind==='door'){get().travel(id,position);return null;}
     if(!get().inspect(id,position))return null;
     const slot=slots.find(s=>s.objectId===id);
-    if(slot){try{const option=slotOption(slot,get().progress.environment,word,remove);get().commitRule(slot.ruleId,option);return get().actionError??(remove?messages.removed:messages.inserted);}catch(e){const message=e instanceof Error?e.message:messages.wrongWord;set({actionError:message});return message;}}
-    if(id==='keyword_cache')return messages.cache;
+    if(slot){try{const option=slotOption(slot,get().progress.environment,word,remove);get().commitRule(slot.ruleId,option);if(get().actionError)return get().actionError;if(JSON.stringify(p.environment)===JSON.stringify(get().progress.environment))return messages.unchanged;return editMessage(slot,option);}catch(e){const message=e instanceof Error?e.message:messages.wrongWord;set({actionError:message});return message;}}
+    if(id==='keyword_cache'){const gained=keywords.filter(k=>!p.keywords.includes(k.id));return gained.length?`${messages.cache} ${gained.map(k=>k.label).join(' · ')}`:messages.cacheEmpty;}
     if(id==='altar_seal'){
      if(p.environment.seal==='broken')return o.text;
      if(!p.sealAttempted){get().beginSeal();return messages.sealed;}
@@ -91,11 +91,12 @@ export function createPrologueStore(storage?:StorageLike) {
      get().help();return null;
     }
     if(id==='identity_belief'){
-     if(p.environment.identity==='sealed'){if(word)get().beginResistance(word);return get().progress.cue?null:messages.needWord;}
+     if(p.environment.identity==='sealed'){if(word)get().beginResistance(word);return get().progress.cue?null:get().actionError??messages.needWord;}
      if(p.environment.identity==='resisting'){get().help();return null;}
      if(['unsealed','placed'].includes(p.environment.identity)){
       if(!remove&&word!==identityText.tokenId)return messages.wrongWord;
-      const current=get().progress;change({...current,phase:'core',environment:{...current.environment,identity:remove?'unsealed':'placed'}});return remove?messages.removed:messages.finalReady;
+      const target=remove?'unsealed':'placed';if(p.environment.identity===target)return messages.unchanged;
+      const current=get().progress;change({...current,phase:'core',environment:{...current.environment,identity:target}});return remove?messages.removed:messages.finalReady;
      }
     }
     if(id==='final_threshold'){
@@ -121,7 +122,7 @@ export function createPrologueStore(storage?:StorageLike) {
    settle:()=>{const p=get().progress;if(p.environment.door==='waiting'&&p.doorOpensAt!==null&&Date.now()>=p.doorOpensAt)change({...p,environment:{...p.environment,door:'open'},doorOpensAt:null});},
    hit:(id,position,now)=>{const p=get().progress,r=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;if(p.phase!=='dungeon'||p.cue||p.dungeon.stability===0||!Number.isFinite(now)||now-p.dungeon.lastHitAt<1000||!(r.enemies.some(e=>e.id===id)||id==='resistance_enemy')||(id==='refusal_charger'&&p.environment.punctuation==='question'))return;change({...p,dungeon:{...p.dungeon,position:safePosition(position,r),stability:Math.max(0,p.dungeon.stability-1),lastHitAt:now}});},
    retry:()=>{const p=get().progress;if(p.phase!=='dungeon'||p.dungeon.stability!==0)return;const room=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;change({...p,dungeon:{...p.dungeon,position:room.start,stability:3,lastHitAt:Date.now()}});},
-   beginResistance:keyword=>{const p=get().progress;if(!near('identity_belief',p.dungeon.position)||!p.keywords.includes(keyword)||!['sun','apostle','betrayal'].includes(keyword)||p.environment.identity!=='sealed')return;change({...p,environment:{...p.environment,identity:'resisting'},resistance:1,cue:{id:'resistance',index:0}});},
+   beginResistance:keyword=>{const p=get().progress;if(!near('identity_belief',p.dungeon.position)||!p.keywords.includes(keyword)||!['sun','apostle','betrayal'].includes(keyword)||p.environment.identity!=='sealed')return;if(p.environment.order!=='swapped'){set({actionError:messages.arrangeFirst});return;}change({...p,environment:{...p.environment,identity:'resisting'},resistance:1,cue:{id:'resistance',index:0}});},
    beginSeal:()=>{const p=get().progress;if(!near('altar_seal',p.dungeon.position)||p.environment.negation!=='detached'||p.environment.door!=='open')return;change({...p,sealAttempted:true});},
    flip:()=>{const p=get().progress;if(p.phase==='dungeon'&&p.sealAttempted&&p.dungeon.roomId==='chapel')change({...p,sealFlipped:!p.sealFlipped});},
    help:()=>{const p=get().progress;if(p.phase!=='dungeon')return;if(p.dungeon.roomId==='chapel'&&p.sealAttempted&&p.environment.seal==='locked')change({...p,cue:{id:'seal',index:0}});else if(p.environment.identity==='resisting')change({...p,cue:{id:'resistance',index:0}});},
