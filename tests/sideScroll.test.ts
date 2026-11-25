@@ -1,90 +1,82 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createPrologueStore, decodePrologue, PROLOGUE_SAVE_KEY } from '../src/prologue/store.ts';
-import { dungeon, questions, meta } from '../src/prologue/content.ts';
-import { sideRooms, surfaces, closedGates, safeSidePosition, physics, slots, slotOption, identityText, stageObject, thoughtText, messages, editToken } from '../src/prologue/sideScroll.ts';
+import { dungeon, questions } from '../src/prologue/content.ts';
+import { sideRooms, surfaces, closedGates, physics } from '../src/prologue/sideScroll.ts';
+import { emptyInk, strokeAcross, strikeRoom, readRealm, roomEnvironment, projectInk, wordCoverage, validStroke, validInk, inkUI } from '../src/prologue/strikes.ts';
+import type { InkRoom } from '../src/prologue/strikes.ts';
 import { initialEnvironment } from '../src/prologue/environment.ts';
 type Store=ReturnType<typeof createPrologueStore>;
 function setup(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);}};return{values,storage,s:createPrologueStore(storage)};}
 function advance(s:Store,id:string){for(let i=0;i<80&&s.getState().progress.nodeId!==id;i++)s.getState().advance(s.getState().progress.nodeId);assert.equal(s.getState().progress.nodeId,id);}
-function enter(s:Store,collect=true){s.getState().start();advance(s,'rescue');s.getState().choose('rescue','yes');advance(s,'threat');s.getState().choose('threat','called');advance(s,'questions');for(const q of questions){s.getState().ask(q.id);if(collect)for(const seg of meta[q.nodeId].segments??[])if(seg.keywordId)s.getState().collect(seg.keywordId);s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();}
-function point(s:Store,id:string){return stageObject(dungeon.rooms.find(r=>r.id===s.getState().progress.dungeon.roomId)!.objects.find(o=>o.id===id)!,s.getState().progress.environment);}
-function touch(s:Store,id:string,word:string|null=null,remove=false){return s.getState().touch(id,word,remove,point(s,id));}
+function enter(s:Store){s.getState().start();advance(s,'rescue');s.getState().choose('rescue','yes');advance(s,'threat');s.getState().choose('threat','called');advance(s,'questions');for(const q of questions){s.getState().ask(q.id);s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();}
+function touch(s:Store,id:string){const o=dungeon.rooms.find(r=>r.id===s.getState().progress.dungeon.roomId)!.objects.find(o=>o.id===id)!;return s.getState().touch(id,null,false,o);}
+function erase(s:Store,word:string){const id=s.getState().progress.dungeon.roomId;return s.getState().editStroke(id,strokeAcross(id,word),strikeRoom(id).anchor);}
 function cue(s:Store){for(let i=0;i<5&&s.getState().progress.cue;i++)s.getState().cueNext();}
-function chapel(s:Store){touch(s,'format_wall');touch(s,'punctuate');touch(s,'trust_bridge','companion');touch(s,'betrayal_memory');cue(s);touch(s,'to_chapel');assert.equal(s.getState().progress.dungeon.roomId,'chapel');}
-function altar(s:Store){chapel(s);touch(s,'detach_denial');touch(s,'door_sentence','merit');touch(s,'altar_seal');touch(s,'altar_seal');assert.equal(s.getState().progress.sealFlipped,true);touch(s,'altar_seal');cue(s);touch(s,'to_altar');assert.equal(s.getState().progress.dungeon.roomId,'altar');}
-test('direct word insertion rejects wrong/unowned words, is reversible, persists and never consumes inventory',()=>{
- const {s,storage}=setup();enter(s);const owned=[...s.getState().progress.keywords];touch(s,'trust_bridge','betrayal');assert.equal(s.getState().progress.environment.bridge,'folded');touch(s,'trust_bridge','companion');assert.equal(s.getState().progress.environment.bridge,'open');assert.deepEqual(s.getState().progress.keywords,owned);
- assert.equal(createPrologueStore(storage).getState().progress.environment.bridge,'open');touch(s,'trust_bridge',null,true);assert.equal(s.getState().progress.environment.bridge,'folded');assert.deepEqual(s.getState().progress.keywords,owned);
- const noWords=setup().s;enter(noWords,false);touch(noWords,'trust_bridge','companion');assert.equal(noWords.getState().progress.environment.bridge,'folded');touch(noWords,'keyword_cache');touch(noWords,'trust_bridge','companion');assert.equal(noWords.getState().progress.environment.bridge,'open');
-});
-test('all three rooms use direct interactions through final insertion, removal, reload, threshold and role transfer',()=>{
- const {s,storage}=setup();enter(s);altar(s);touch(s,'order_thoughts');assert.equal(s.getState().progress.environment.order,'swapped');touch(s,'identity_belief','apostle');assert.ok(s.getState().progress.cue);cue(s);assert.equal(s.getState().progress.phase,'core');
- touch(s,'identity_belief',identityText.tokenId);assert.equal(s.getState().progress.environment.identity,'placed');assert.equal(s.getState().progress.editResult,null);
- const r=createPrologueStore(storage);assert.equal(r.getState().error,null);assert.equal(r.getState().progress.environment.identity,'placed');touch(r,'identity_belief',null,true);assert.equal(r.getState().progress.environment.identity,'unsealed');touch(r,'final_threshold');assert.equal(r.getState().progress.editResult,null);
- touch(r,'identity_belief',identityText.tokenId);touch(r,'final_threshold');assert.equal(r.getState().progress.nodeId,'return_0');assert.equal(r.getState().progress.editResult?.selections.identity,'apostle');assert.equal(r.getState().progress.events.filter(e=>e==='identity_committed').length,1);
- const snapshot=structuredClone(r.getState().progress);r.getState().touch('final_threshold',null,false,{x:2520,y:570});assert.deepEqual(r.getState().progress,snapshot);
- advance(r,'name');r.getState().name('세라');advance(r,'village');assert.equal(r.getState().progress.playableId,'inquisitor');assert.equal(createPrologueStore(storage).getState().progress.name,'세라');
-});
-test('nearby gates are required, remote input/cue input rejected, falls keep words and solved state',()=>{
- const {s}=setup();enter(s);s.getState().touch('trust_bridge','companion',false,{x:180,y:570});assert.equal(s.getState().progress.environment.bridge,'folded');touch(s,'trust_bridge','companion');touch(s,'betrayal_memory');const state=structuredClone(s.getState().progress);touch(s,'trust_bridge',null,true);assert.deepEqual(s.getState().progress,state);cue(s);
- s.getState().fall();assert.equal(s.getState().progress.environment.bridge,'open');assert.equal(s.getState().progress.keywords.length,5);assert.equal(s.getState().progress.dungeon.stability,3);
-});
-test('old top-down saves migrate to safe entrances while preserving progress, names and old separate game storage',()=>{
- const {s,values,storage}=setup();enter(s);altar(s);const raw=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);raw.contentVersion='first-act-1';raw.state.dungeon.position={x:800,y:290};values.set(PROLOGUE_SAVE_KEY,JSON.stringify(raw));values.set('nyarlathotep-vn.save.v1','unchanged');const r=createPrologueStore(storage);
- assert.equal(r.getState().error,null);assert.equal(r.getState().progress.dungeon.roomId,'altar');assert.equal(r.getState().progress.dungeon.position.x,180);assert.equal(r.getState().progress.environment.seal,'broken');assert.deepEqual(r.getState().progress.keywords,s.getState().progress.keywords);assert.equal(values.get('nyarlathotep-vn.save.v1'),'unchanged');
- // Reading alone never overwrites the source save. Unsupported versions stay rejected.
- assert.equal(JSON.parse(values.get(PROLOGUE_SAVE_KEY)!).contentVersion,'first-act-1');raw.contentVersion='future';assert.throws(()=>decodePrologue(JSON.stringify(raw)));
-});
-test('surface geometry has walkable room exits, jumpable optional steps and an unjumpable missing bridge',()=>{
- const env={...initialEnvironment(),wall:'crossed',bridge:'open',punctuation:'question',negation:'detached',door:'open',seal:'broken'};
- const jumpHeight=physics.jumpSpeed**2/(2*physics.gravity),jumpRange=physics.speed*2*physics.jumpSpeed/physics.gravity;
- for(const room of sideRooms){const ground=surfaces(room.id,env).filter(r=>r.y===physics.groundY).sort((a,b)=>a.x-b.x);let end=ground[0].x;for(const rect of ground){assert.ok(rect.x<=end,`${room.id}: ground gap`);end=rect.x+rect.w;}
-  const source=dungeon.rooms.find(r=>r.id===room.id)!;for(const o of source.objects){assert.ok(o.x>=ground[0].x&&o.x<=end,o.id);assert.ok(Math.abs(o.y-(physics.groundY-physics.bodyHeight/2))<110);}
-  for(const step of room.platforms.filter(r=>r.y<physics.groundY))assert.ok(physics.groundY-step.y<jumpHeight,'low jump reaches optional step');
-  assert.equal(closedGates(room.id,env).length,0);
-  if(room.bridge)assert.ok(room.bridge.w>jumpRange+physics.bodyWidth,'bridge cannot be skipped with a jump');
- }
- assert.equal(closedGates('chapel',initialEnvironment()).length,3);
-});
-test('checkpoint recovery never leaves player over a removed bridge or inside a restored gate',()=>{
- const env=initialEnvironment();assert.equal(safeSidePosition({x:1600,y:570},'betrayal',env).x,180);assert.equal(safeSidePosition({x:710,y:570},'betrayal',env).x,180);
- assert.equal(safeSidePosition({x:1600,y:570},'betrayal',{...env,bridge:'open'}).x,1600);
- const slot=slots.find(s=>s.objectId==='trust_bridge')!;assert.throws(()=>slotOption(slot,env,'sun',false));assert.equal(slotOption(slot,env,null,true),'empty');
-});
-test('final word can be carried through a previous room and still completed at the threshold',()=>{
- const {s}=setup();enter(s);altar(s);touch(s,'order_thoughts');touch(s,'identity_belief','apostle');cue(s);touch(s,'identity_belief',identityText.tokenId);touch(s,'back_chapel');touch(s,'to_altar');touch(s,'final_threshold');assert.equal(s.getState().progress.nodeId,'return_0');
-});
+function chapel(s:Store){erase(s,'blocks');touch(s,'betrayal_memory');cue(s);touch(s,'to_chapel');assert.equal(s.getState().progress.dungeon.roomId,'chapel');}
+function altar(s:Store){chapel(s);erase(s,'locks');touch(s,'altar_seal');cue(s);touch(s,'to_altar');assert.equal(s.getState().progress.dungeon.roomId,'altar');}
 
-test('P1: unchanged edits and empty recovery never claim a world change',()=>{
- const {s}=setup();enter(s);
- assert.equal(touch(s,'format_wall',null,true),messages.unchanged);
- assert.equal(touch(s,'trust_bridge','companion'),messages.inserted);
- assert.equal(touch(s,'trust_bridge','companion'),messages.unchanged);
- assert.equal(touch(s,'trust_bridge','betrayal'),messages.wrongWord);
- assert.equal(s.getState().progress.environment.bridge,'open');
- assert.equal(touch(s,'keyword_cache'),messages.cacheEmpty);
- assert.equal(editToken('format_wall'),'절대로');assert.equal(editToken('door_sentence'),'공적');
+test('ink coverage depends on both endpoints; a partial word and a vertical line do not cancel the verb',()=>{
+ const word=strikeRoom('chapel').words.find(w=>w.id==='locks')!,full=strokeAcross('chapel','locks');
+ assert.equal(wordCoverage(word,full),'full');
+ assert.equal(wordCoverage(word,{a:full.a,b:{x:word.x+word.w/2,y:word.y}}),'partial');
+ assert.notEqual(wordCoverage(word,{a:{x:word.x+word.w/2,y:200},b:{x:word.x+word.w/2,y:380}}),'full');
+ assert.equal(wordCoverage(word,{a:{x:full.a.x,y:word.y+70},b:{x:full.b.x,y:word.y+70}}),'none');
+ assert.ok(validStroke(full,'chapel'));assert.ok(!validStroke({a:{x:0,y:0},b:full.b},'chapel'));assert.ok(!validStroke({a:{x:NaN,y:220},b:full.b},'chapel'));
 });
-test('P1: punctuation changes real collision and can be restored',()=>{
- const {s}=setup();enter(s);
- assert.ok(closedGates('betrayal',s.getState().progress.environment).some(g=>g.key==='punctuation'));
- const gate=closedGates('betrayal',s.getState().progress.environment).find(g=>g.key==='punctuation')!;
- const station=point(s,'punctuate');assert.ok(Math.abs(gate.x+gate.w+physics.bodyWidth/2-station.x)<dungeon.rules.interactionRadius,'old saves can reach the control from the right');
- touch(s,'punctuate');assert.ok(!closedGates('betrayal',s.getState().progress.environment).some(g=>g.key==='punctuation'));
- touch(s,'punctuate',null,true);assert.ok(closedGates('betrayal',s.getState().progress.environment).some(g=>g.key==='punctuation'));
+test('the same light entity drives both rules; erasing the locking action preserves light and bridge',()=>{
+ const dark=readRealm('chapel',strokeAcross('chapel','c_light1'));
+ assert.equal(dark.lightOn,false);assert.equal(dark.bridgeSolid,false);assert.equal(dark.doorLocked,false);
+ const action=readRealm('chapel',strokeAcross('chapel','locks'));
+ assert.equal(action.lightOn,true);assert.equal(action.bridgeSolid,true);assert.equal(action.doorLocked,false);assert.equal(action.doorPresent,true);
+ assert.notEqual(dark.reaction,action.reaction);
+ const ghost=readRealm('chapel',strokeAcross('chapel','c_door'));assert.equal(ghost.doorPresent,false);assert.equal(ghost.bridgeSolid,true);
+ const unsupported=readRealm('chapel',strokeAcross('chapel','c_support'));assert.equal(unsupported.bridgePresent,true);assert.equal(unsupported.bridgeSolid,false);assert.equal(unsupported.lightOn,true);
 });
-test('P1: thought order moves stable IDs, gates the first rewrite, and preserves reversible saves',()=>{
- const {s,storage}=setup();enter(s);altar(s);
- touch(s,'identity_belief','apostle');assert.equal(s.getState().progress.cue,null);assert.equal(s.getState().actionError,messages.arrangeFirst);
- touch(s,'order_thoughts');
- assert.equal(point(s,'identity_belief').x,920);assert.equal(point(s,'identity_judgment').x,1460);
- assert.notEqual(thoughtText('identity_belief',s.getState().progress.environment),thoughtText('identity_judgment',s.getState().progress.environment));
- s.getState().touch('identity_belief','apostle',false,{x:1460,y:570});assert.equal(s.getState().progress.cue,null);
- touch(s,'identity_belief','apostle');cue(s);touch(s,'identity_belief',identityText.tokenId);
- assert.equal(touch(s,'identity_belief',identityText.tokenId),messages.unchanged);
- const restored=createPrologueStore(storage);assert.equal(restored.getState().progress.environment.identity,'placed');
- touch(restored,'order_thoughts');assert.equal(point(restored,'identity_belief').x,1460);
- touch(restored,'identity_belief',null,true);assert.equal(restored.getState().progress.environment.identity,'unsealed');
- touch(restored,'identity_belief',identityText.tokenId);touch(restored,'final_threshold');assert.equal(restored.getState().progress.events.filter(id=>id==='identity_committed').length,1);
+test('a long stroke can suppress several words; valid alternatives alter the observer and subject differently',()=>{
+ const ink={a:{x:410,y:254},b:{x:910,y:254}};assert.ok(validStroke(ink,'chapel'));assert.equal(readRealm('chapel',ink).bridgeSolid,false);
+ const companion=readRealm('betrayal',strokeAcross('betrayal','companion')),action=readRealm('betrayal',strokeAcross('betrayal','blocks'));
+ assert.equal(companion.wallSolid,false);assert.equal(action.wallSolid,false);assert.equal(companion.companionPresent,false);assert.equal(action.companionPresent,true);assert.notEqual(companion.reaction,action.reaction);
+ const self=readRealm('altar',strokeAcross('altar','a_self1'));assert.equal(self.selfPresent,false);assert.equal(self.mood,'faded');
+ const free=readRealm('altar',strokeAcross('altar','binds'));assert.equal(free.bound,false);assert.equal(free.faithIntact,true);
+});
+test('preview is pure, commit copies geometry, reset reverses effects and unchanged drops do not write',()=>{
+ const {s,storage}=setup();enter(s);const before=structuredClone(s.getState().progress);readRealm('betrayal',strokeAcross('betrayal','blocks'));assert.deepEqual(s.getState().progress,before);
+ const stroke=strokeAcross('betrayal','blocks');s.getState().editStroke('betrayal',stroke,strikeRoom('betrayal').anchor);stroke.a.x=0;
+ assert.equal(s.getState().progress.environment.wall,'crossed');const checkpoint=structuredClone(s.getState().progress);assert.equal(erase(s,'blocks'),inkUI.same);assert.deepEqual(s.getState().progress,checkpoint);
+ const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);restored.getState().editStroke('betrayal',null,strikeRoom('betrayal').anchor);assert.equal(restored.getState().progress.environment.wall,'solid');
+});
+test('remote, cross-room, nonfinite and narration-time edits never change persistent progress',()=>{
+ const {s}=setup();enter(s);const before=structuredClone(s.getState().progress);
+ s.getState().editStroke('chapel',strokeAcross('chapel','locks'),strikeRoom('betrayal').anchor);
+ s.getState().editStroke('betrayal',strokeAcross('betrayal','blocks'),{x:2600,y:570});
+ s.getState().editStroke('betrayal',{a:{x:NaN,y:200},b:{x:500,y:200}},strikeRoom('betrayal').anchor);assert.deepEqual(s.getState().progress,before);
+ erase(s,'blocks');touch(s,'betrayal_memory');const cueState=structuredClone(s.getState().progress);erase(s,'memory');assert.deepEqual(s.getState().progress,cueState);
+});
+test('removing the chapel bridge restores the nearest safe edge and can be undone from that edge',()=>{
+ const {s}=setup();enter(s);chapel(s);
+ const result=s.getState().editStroke('chapel',strokeAcross('chapel','c_light1'),{x:1080,y:576});assert.equal(result,inkUI.safe);
+ const x=s.getState().progress.dungeon.position.x;assert.ok(x>=900&&x<=1240);assert.ok(x<950||x>1210);assert.equal(s.getState().progress.environment.door,'open');
+ s.getState().editStroke('chapel',null,s.getState().progress.dungeon.position);assert.equal(readRealm('chapel',s.getState().progress.ink.chapel).bridgeSolid,true);
+});
+test('faith and self erasure, rather than a selected word, control resistance and the single final commitment',()=>{
+ const {s,storage}=setup();enter(s);altar(s);erase(s,'a_self1');assert.equal(s.getState().progress.cue,null);touch(s,'final_threshold');assert.equal(s.getState().progress.editResult,null);
+ erase(s,'binds');assert.equal(s.getState().progress.cue,null);erase(s,'sun');assert.equal(s.getState().progress.cue?.id,'resistance');cue(s);assert.equal(s.getState().progress.environment.identity,'placed');
+ const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);restored.getState().editStroke('altar',null,strikeRoom('altar').anchor);assert.equal(restored.getState().progress.environment.identity,'unsealed');touch(restored,'final_threshold');assert.equal(restored.getState().progress.editResult,null);
+ erase(restored,'serves');assert.equal(restored.getState().progress.cue,null);assert.equal(restored.getState().progress.environment.identity,'placed');touch(restored,'final_threshold');assert.equal(restored.getState().progress.nodeId,'return_0');
+ const snapshot=structuredClone(restored.getState().progress);touch(restored,'final_threshold');assert.deepEqual(restored.getState().progress,snapshot);assert.equal(snapshot.events.filter(e=>e==='identity_committed').length,1);
+});
+test('known old saves translate their puzzle outcomes; invalid ink and unknown versions stay preserved',()=>{
+ const {s,values,storage}=setup();enter(s);altar(s);erase(s,'sun');cue(s);
+ const legacy=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);legacy.contentVersion='first-act-side-2';delete legacy.state.ink;legacy.state.environment.wall='crossed';legacy.state.environment.door='open';values.set(PROLOGUE_SAVE_KEY,JSON.stringify(legacy));values.set('nyarlathotep-vn.save.v1','separate');
+ const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);assert.ok(restored.getState().progress.ink.altar);assert.equal(restored.getState().progress.environment.identity,'placed');assert.equal(values.get('nyarlathotep-vn.save.v1'),'separate');
+ assert.equal(JSON.parse(values.get(PROLOGUE_SAVE_KEY)!).contentVersion,'first-act-side-2');
+ legacy.contentVersion='first-act-strike-3';legacy.state.ink={...emptyInk(),altar:{a:{x:99999,y:1},b:{x:3,y:4}}};assert.throws(()=>decodePrologue(JSON.stringify(legacy)));
+ legacy.contentVersion='future';values.set(PROLOGUE_SAVE_KEY,JSON.stringify(legacy));const raw=values.get(PROLOGUE_SAVE_KEY);const broken=createPrologueStore(storage);assert.ok(broken.getState().error);broken.getState().retrySave();assert.equal(values.get(PROLOGUE_SAVE_KEY),raw);
+ assert.ok(!validInk({...emptyInk(),extra:null}));
+});
+test('the two bridges share collision heights with their artwork; solved rooms have continuous walkable ground',()=>{
+ const ink=emptyInk();ink.betrayal=strokeAcross('betrayal','blocks');ink.chapel=strokeAcross('chapel','locks');const base={...projectInk(ink,initialEnvironment()),seal:'broken'};
+ for(const room of sideRooms){const env=roomEnvironment(room.id,ink,base),ground=surfaces(room.id,env).filter(r=>r.y===physics.groundY).sort((a,b)=>a.x-b.x);let end=ground[0].x;for(const r of ground){assert.ok(r.x<=end,room.id);end=r.x+r.w;}assert.equal(closedGates(room.id,env).length,0);if(room.bridge)assert.ok(room.bridge.w>physics.speed*2*physics.jumpSpeed/physics.gravity+physics.bodyWidth);}
+ for(const id of ['betrayal','chapel','altar'] as InkRoom[])assert.equal(validStroke(strikeRoom(id).park,id),true);
 });

@@ -67,3 +67,11 @@
 .reduced-effects .ink-before,.reduced-effects .ink-hand{display:none}
 .keyword-flight{position:fixed;z-index:55;pointer-events:none;background:#ead6ad;color:#713449;padding:5px 10px;animation:keyword-flight .7s ease-in both}
 @keyframes keyword-flight{0%{opacity:1;transform:translate(0,0) rotate(-3deg)}80%{opacity:1}100%{opacity:0;transform:translate(var(--flight-x),var(--flight-y)) rotate(5deg)}}
+
+/* The ink is manipulated on the actual stage; the caption reflects the same preview. */
+.strike-dungeon .side-context{left:34%;bottom:3%}
+.side-mind{position:absolute;right:16px;top:70px;z-index:9;width:248px;padding:13px 16px;border-left:2px solid #bda276;background:#20182cdd;pointer-events:none;transition:border-color .25s,background .25s}
+.side-mind small{font-size:12px;color:#c6ac88}.side-mind p{font-size:17px;line-height:1.65;margin:7px 0;color:#eee0c5}.side-mind>span{font-size:12px;line-height:1.6;color:#c9b49c}.side-mind.mood-doubt{border-color:#dc91ac;background:#332034eb}.side-mind.mood-faded{border-color:#8a849e;background:#181726e8}.side-mind.mood-rewritten{border-color:#ef729c;background:#412039ed}
+.ink-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #927c5155}.ink-controls>p{flex:1;min-width:260px;font-size:14px;line-height:1.6;color:#e1cda9}.ink-controls>div{display:flex;gap:8px}.ink-controls button{padding:8px 12px;border:1px solid #977555;background:#261c2d;color:#ead0b0;font-size:13px}.ink-controls small{width:100%;font-size:12px;color:#bba787}.strike-dungeon .side-notice{top:auto;bottom:85px;max-width:70%;font-size:15px;padding:8px 12px;pointer-events:none}.strike-dungeon .pro-dungeon-foot{padding-top:5px}
+@media(min-width:900px) and (min-height:600px){.strike-dungeon{max-width:min(1440px,calc((100svh - 165px)*16/9))}.strike-dungeon .pro-dungeon-foot p{font-size:13px}.ink-controls{gap:8px;padding:6px 0}}
+@media(max-width:850px){.side-mind{top:48px;right:8px;width:190px;padding:8px}.side-mind p{font-size:13px}.side-mind small,.side-mind>span{font-size:10px}.ink-controls>p{font-size:12px}.ink-controls small{font-size:10px}.strike-dungeon .side-context{left:40%}}
