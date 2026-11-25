@@ -89,85 +89,72 @@
         "id": "betrayal",
         "name": "배신의 회랑",
         "subtitle": "I · 텍스트는 사물이다",
-        "objective": "단어의 서식을 바꾸고, 동료를 믿었던 기억으로 다리를 펼치세요.",
+        "objective": "동료의 말을 끼워 다리를 펼치고, 건너편 인형의 기억을 확인하세요.",
         "palette": [
           "#352a30",
           "#a2393c",
           "#e0cfa7"
         ],
-        "width": 1600,
+        "width": 2800,
         "height": 960,
         "start": {
           "x": 180,
-          "y": 480
+          "y": 570
         },
         "backgroundImage": "/assets/dungeon/corridor-collage.png",
-        "obstacles": [
-          {
-            "x": 900,
-            "y": 44,
-            "w": 120,
-            "h": 376
-          },
-          {
-            "x": 900,
-            "y": 540,
-            "w": 120,
-            "h": 376
-          }
-        ],
+        "obstacles": [],
         "objects": [
           {
             "id": "keyword_cache",
             "kind": "inspect",
-            "x": 210,
-            "y": 720,
+            "x": 230,
+            "y": 570,
             "title": "접힌 대화의 기억",
             "text": "놓친 말들은 여기에도 남아 있다. 태양의 신 · 사도 · 동료 · 배신 · 공적."
           },
           {
             "id": "format_wall",
             "kind": "inspect",
-            "x": 300,
-            "y": 330,
+            "x": 550,
+            "y": 570,
             "title": "단단한 글자",
             "text": "굵은 글씨는 벽이다. 취소선은 존재를 불안정하게 만든다."
           },
           {
             "id": "punctuate",
             "kind": "inspect",
-            "x": 350,
-            "y": 680,
+            "x": 960,
+            "y": 570,
             "title": "거부의 문장부호",
             "text": "느낌표는 돌진한다. 물음표는 망설인다."
           },
           {
             "id": "trust_bridge",
             "kind": "inspect",
-            "x": 760,
-            "y": 480,
+            "x": 1270,
+            "y": 570,
             "title": "믿음의 다리",
             "text": "나는 [　　　]를 믿었다."
           },
           {
             "id": "betrayal_memory",
             "kind": "inspect",
-            "x": 1180,
-            "y": 680,
+            "x": 2040,
+            "y": 570,
             "title": "등을 돌린 인형",
             "text": "함께 싸웠는데. 믿었는데. 어째서?"
           },
           {
             "id": "to_chapel",
             "kind": "door",
-            "x": 1450,
-            "y": 480,
+            "x": 2640,
+            "y": 570,
             "title": "다음 장면",
             "text": "다리를 건너고 기억을 확인하세요.",
             "targetRoom": "chapel",
             "spawn": {
               "x": 180,
-              "y": 480
+              "y": 570
             }
           }
         ],
@@ -175,21 +162,21 @@
           {
             "id": "betrayal_chaser",
             "typeId": "betrayal_enemy",
-            "x": 660,
-            "y": 300,
+            "x": 1100,
+            "y": 570,
             "patrol": {
-              "x": 660,
-              "y": 680
+              "x": 1200,
+              "y": 570
             }
           },
           {
             "id": "refusal_charger",
             "typeId": "refusal_enemy",
-            "x": 380,
-            "y": 750,
+            "x": 1100,
+            "y": 570,
             "patrol": {
-              "x": 600,
-              "y": 750
+              "x": 1200,
+              "y": 570
             }
           }
         ],
@@ -199,90 +186,77 @@
         "id": "chapel",
         "name": "응답 없는 예배당",
         "subtitle": "II · 텍스트는 세계의 법칙이다",
-        "objective": "부정어를 떼어 내고 문을 여세요. 제단의 봉인은 혼자 풀 수 없습니다.",
+        "objective": "부정어를 뜯고 공적을 문에 끼우세요. 봉인된 종이는 뒤집어 볼 수 있습니다.",
         "palette": [
           "#352a30",
           "#a2393c",
           "#e0cfa7"
         ],
-        "width": 1600,
+        "width": 2800,
         "height": 960,
         "start": {
           "x": 180,
-          "y": 480
+          "y": 570
         },
         "backgroundImage": "/assets/prologue/chapel.svg",
-        "obstacles": [
-          {
-            "x": 1050,
-            "y": 44,
-            "w": 100,
-            "h": 376
-          },
-          {
-            "x": 1050,
-            "y": 540,
-            "w": 100,
-            "h": 376
-          }
-        ],
+        "obstacles": [],
         "objects": [
           {
             "id": "back_betrayal",
             "kind": "door",
-            "x": 120,
-            "y": 480,
+            "x": 140,
+            "y": 570,
             "title": "이전 장면",
             "text": "배신의 회랑으로 돌아간다.",
             "targetRoom": "betrayal",
             "spawn": {
-              "x": 1350,
-              "y": 480
+              "x": 2460,
+              "y": 570
             }
           },
           {
             "id": "sealed_belief",
             "kind": "inspect",
-            "x": 540,
-            "y": 230,
+            "x": 390,
+            "y": 570,
             "title": "신성한 신념",
             "text": "나는 태양의 신을 믿는다.\n태양의 신은 나를 지켜줄 것이다."
           },
           {
             "id": "detach_denial",
             "kind": "inspect",
-            "x": 600,
-            "y": 600,
+            "x": 730,
+            "y": 570,
             "title": "붙어 있는 부정",
             "text": "아니야 — 여기가 출구다."
           },
           {
             "id": "door_sentence",
             "kind": "inspect",
-            "x": 880,
-            "y": 650,
+            "x": 1300,
+            "y": 570,
             "title": "응답하지 않는 문",
             "text": "이 문은 절대로 열리지 않는다."
           },
           {
             "id": "altar_seal",
             "kind": "inspect",
-            "x": 1270,
-            "y": 480,
+            "x": 2040,
+            "y": 570,
             "title": "신성한 봉인",
             "text": "하지만 신은 응답하지 않았다."
           },
           {
             "id": "to_altar",
             "kind": "door",
-            "x": 1470,
-            "y": 480,
+            "x": 2640,
+            "y": 570,
             "title": "이름 없는 제단으로",
             "text": "봉인 뒤의 종이 공간이 접혀 있다.",
             "targetRoom": "altar",
             "spawn": {
               "x": 180,
-              "y": 480
+              "y": 570
             }
           }
         ],
@@ -293,17 +267,17 @@
         "id": "altar",
         "name": "이름 없는 제단",
         "subtitle": "III · 텍스트는 정체성이다",
-        "objective": "세 문장을 조사하고 순서를 바꿔 보세요. 마지막 한 줄에 손을 대세요.",
+        "objective": "사고의 걸이를 바꾸고 신념에 손을 대세요. 마지막 문장 너머로 걸어가세요.",
         "palette": [
           "#352a30",
           "#a2393c",
           "#e0cfa7"
         ],
-        "width": 1600,
+        "width": 2800,
         "height": 960,
         "start": {
           "x": 180,
-          "y": 480
+          "y": 570
         },
         "backgroundImage": "/assets/prologue/altar.svg",
         "obstacles": [],
@@ -311,47 +285,55 @@
           {
             "id": "back_chapel",
             "kind": "door",
-            "x": 120,
-            "y": 480,
+            "x": 140,
+            "y": 570,
             "title": "이전 장면",
             "text": "응답 없는 예배당으로 돌아간다.",
             "targetRoom": "chapel",
             "spawn": {
-              "x": 1360,
-              "y": 480
+              "x": 2460,
+              "y": 570
             }
           },
           {
             "id": "order_thoughts",
             "kind": "inspect",
-            "x": 350,
-            "y": 700,
+            "x": 510,
+            "y": 570,
             "title": "사고의 순서",
             "text": "처음 두 문장의 순서를 바꾸면 무대도 바뀐다."
           },
           {
             "id": "identity_belief",
             "kind": "inspect",
-            "x": 800,
-            "y": 290,
+            "x": 1460,
+            "y": 570,
             "title": "믿음의 대상",
             "text": "나는 태양의 신을 섬긴다."
           },
           {
             "id": "identity_judgment",
             "kind": "inspect",
-            "x": 800,
-            "y": 480,
+            "x": 920,
+            "y": 570,
             "title": "심판의 대상",
             "text": "나는 신의 적을 심판한다."
           },
           {
             "id": "identity_mission",
             "kind": "inspect",
-            "x": 800,
-            "y": 670,
+            "x": 1990,
+            "y": 570,
             "title": "남겨진 사명",
             "text": "나는 나의 사명을 완수해야 한다."
+          },
+          {
+            "id": "final_threshold",
+            "kind": "inspect",
+            "x": 2520,
+            "y": 570,
+            "title": "완성된 문장 너머로",
+            "text": "문장을 읽고 제단을 통과하면 새로운 정체성이 확정됩니다."
           }
         ],
         "enemies": [],
@@ -555,14 +537,14 @@
     {
       "id": "door_rule",
       "objectId": "door_sentence",
-      "title": "문장을 바꾸면 문이 바뀐다",
+      "title": "이 문은 [　　　]을 가진 자에게 열린다.",
       "kind": "replace",
       "stateKey": "door",
       "options": [
         {
           "id": "closed",
           "label": "절대로 열리지 않는다",
-          "text": "이 문은 절대로 열리지 않는다.",
+          "text": "이 문은 [　　　]을 가진 자에게 열린다.",
           "value": "closed",
           "resultId": "door_rule_closed"
         },
@@ -576,10 +558,11 @@
         },
         {
           "id": "open",
-          "label": "이미 열려 있다",
-          "text": "이 문은 이미 열려 있다.",
+          "label": "공적",
+          "text": "이 문은 공적을 가진 자에게 열린다.",
           "value": "open",
-          "resultId": "door_rule_open"
+          "resultId": "door_rule_open",
+          "keywordId": "merit"
         }
       ]
     },

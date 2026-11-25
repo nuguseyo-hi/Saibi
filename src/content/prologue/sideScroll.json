@@ -1,0 +1,193 @@
+{
+  "physics": {
+    "speed": 240,
+    "gravity": 1000,
+    "jumpSpeed": 360,
+    "bodyWidth": 34,
+    "bodyHeight": 88,
+    "groundY": 620
+  },
+  "rooms": [
+    {
+      "id": "betrayal",
+      "platforms": [
+        {
+          "x": 62,
+          "y": 620,
+          "w": 1358,
+          "h": 100
+        },
+        {
+          "x": 1790,
+          "y": 620,
+          "w": 948,
+          "h": 100
+        },
+        {
+          "x": 350,
+          "y": 580,
+          "w": 90,
+          "h": 40
+        }
+      ],
+      "bridge": {
+        "x": 1420,
+        "y": 620,
+        "w": 370,
+        "h": 28
+      },
+      "gates": [
+        {
+          "key": "wall",
+          "open": "crossed",
+          "x": 690,
+          "y": 310,
+          "w": 48,
+          "h": 310,
+          "label": "절대로"
+        }
+      ]
+    },
+    {
+      "id": "chapel",
+      "platforms": [
+        {
+          "x": 62,
+          "y": 620,
+          "w": 2676,
+          "h": 100
+        },
+        {
+          "x": 1670,
+          "y": 578,
+          "w": 110,
+          "h": 42
+        }
+      ],
+      "gates": [
+        {
+          "key": "negation",
+          "open": "detached",
+          "x": 900,
+          "y": 310,
+          "w": 48,
+          "h": 310,
+          "label": "아니야"
+        },
+        {
+          "key": "door",
+          "open": "open",
+          "x": 1500,
+          "y": 310,
+          "w": 50,
+          "h": 310,
+          "label": "닫힌 문"
+        },
+        {
+          "key": "seal",
+          "open": "broken",
+          "x": 2270,
+          "y": 310,
+          "w": 50,
+          "h": 310,
+          "label": "봉인"
+        }
+      ]
+    },
+    {
+      "id": "altar",
+      "platforms": [
+        {
+          "x": 62,
+          "y": 620,
+          "w": 2676,
+          "h": 100
+        }
+      ],
+      "gates": []
+    }
+  ],
+  "slots": [
+    {
+      "objectId": "format_wall",
+      "ruleId": "wall_rule",
+      "mode": "toggle",
+      "insert": "crossed",
+      "remove": "solid",
+      "verb": "금지의 글자 뜯기",
+      "restore": "글자 다시 붙이기"
+    },
+    {
+      "objectId": "punctuate",
+      "ruleId": "punctuation_rule",
+      "mode": "toggle",
+      "insert": "question",
+      "remove": "exclaim",
+      "verb": "느낌표를 뒤집기",
+      "restore": "느낌표로 되돌리기"
+    },
+    {
+      "objectId": "trust_bridge",
+      "ruleId": "bridge_rule",
+      "mode": "word",
+      "insert": "companion",
+      "remove": "empty",
+      "keywordId": "companion",
+      "verb": "동료 끼우기",
+      "restore": "동료 뽑기"
+    },
+    {
+      "objectId": "detach_denial",
+      "ruleId": "denial_rule",
+      "mode": "toggle",
+      "insert": "detached",
+      "remove": "attached",
+      "verb": "부정어 뜯기",
+      "restore": "부정어 다시 붙이기"
+    },
+    {
+      "objectId": "door_sentence",
+      "ruleId": "door_rule",
+      "mode": "word",
+      "insert": "open",
+      "remove": "closed",
+      "keywordId": "merit",
+      "verb": "공적 끼우기",
+      "restore": "공적 뽑기"
+    },
+    {
+      "objectId": "order_thoughts",
+      "ruleId": "order_rule",
+      "mode": "toggle",
+      "insert": "swapped",
+      "remove": "original",
+      "verb": "두 문장의 걸이 바꾸기",
+      "restore": "원래 순서로 걸기"
+    }
+  ],
+  "identity": {
+    "tokenId": "hidden_name",
+    "label": "■■■■■■■",
+    "before": "나는 태양의 신을 섬긴다.",
+    "after": "나는 ■■■■■■■의 사도다."
+  },
+  "messages": {
+    "wrongWord": "이 종이에는 맞지 않는 말입니다. 다른 단어를 손에 들어 보세요.",
+    "needWord": "아래 단어 조각을 선택한 뒤 E로 끼우세요.",
+    "cache": "놓쳤던 말들을 주웠습니다. 숫자 키나 휠로 손에 들 단어를 고르세요.",
+    "removed": "종이 조각을 뽑았습니다. 원래 기억의 흔적이 남습니다.",
+    "inserted": "단어가 자리를 잡았습니다. 무대도 함께 바뀝니다.",
+    "fall": "찢어진 무대에서 다시 일어났습니다. 모은 단어와 편집은 남습니다.",
+    "sealed": "봉인이 손을 밀어냅니다. 다시 E를 눌러 종이를 뒤집어 보세요.",
+    "flipped": "뒷면의 기억이 드러났습니다. E로 나레이터의 손을 받아들이세요.",
+    "finalReady": "마지막 문장을 끼웠습니다. R로 뽑거나 오른쪽 제단으로 걸어가세요.",
+    "finalLocked": "아직 마지막 문장이 완성되지 않았습니다."
+  },
+  "scenery": {
+    "caption": "기억은 종이보다 쉽게 찢어진다.",
+    "altarCaption": "믿음     심판     사명",
+    "abyss": "찢어진 기억",
+    "originalOrder": "믿음\n     심판",
+    "swappedOrder": "심판\n     믿음"
+  }
+}

@@ -6,9 +6,10 @@ import { initialDungeon, validPosition, safePosition } from '../dungeon/model.ts
 import type { DungeonProgress, Point } from '../dungeon/model.ts';
 import type { StorageLike } from '../services/storage.ts';
 import { record } from '../domain/validation.ts';
-import { scenario, meta, dungeon, keywords, questions, rules, texts, identityEvent, STATE_VALUES, narration } from './content.ts';
-import { applyRule, initialEnvironment, textPhysics, exitAvailable } from './environment.ts';
+import { scenario, meta, dungeon, keywords, questions, rules, identityEvent, STATE_VALUES, narration } from './content.ts';
+import { applyRule, initialEnvironment, exitAvailable } from './environment.ts';
 import type { EnvironmentState } from './environment.ts';
+import { safeSidePosition, slots, slotOption, messages, identityText } from './sideScroll.ts';
 export const PROLOGUE_SAVE_KEY='saibi.prologue.v1';
 export interface PrologueState {
  phase:'story'|'dungeon'|'core'|'village'|'church';nodeId:string;guard:number;questions:string[];keywords:string[];
@@ -21,7 +22,7 @@ const initial=():PrologueState=>({phase:'story',nodeId:scenario.startNodeId,guar
 const unique=(v:unknown,allowed:string[]):v is string[]=>Array.isArray(v)&&new Set(v).size===v.length&&v.every(x=>typeof x==='string'&&allowed.includes(x));
 const validName=(name:unknown):name is string=>typeof name==='string'&&[...name.trim()].length>=1&&[...name.trim()].length<=20&&!/[\u0000-\u001f\u007f]/u.test(name);
 export function decodePrologue(raw:string):PrologueState {
- const e:unknown=JSON.parse(raw);if(!record(e)||e.version!==1||e.contentVersion!=='first-act-1'||!record(e.state))throw new Error('호환되지 않는 프롤로그 저장입니다.');
+ const e:unknown=JSON.parse(raw);if(!record(e)||e.version!==1||!['first-act-1','first-act-side-2'].includes(String(e.contentVersion))||!record(e.state))throw new Error('호환되지 않는 프롤로그 저장입니다.');
  const s=e.state;
  if(!['story','dungeon','core','village','church'].includes(String(s.phase))||!scenario.nodes.some(n=>n.id===s.nodeId)||![0,90,100].includes(Number(s.guard))||typeof s.guard!=='number')throw new Error('잘못된 진행');
  if(!unique(s.questions,questions.map(q=>q.id))||!unique(s.keywords,keywords.map(k=>k.id))||!unique(s.visited,['church','square','road']))throw new Error('잘못된 기억');
@@ -37,8 +38,11 @@ export function decodePrologue(raw:string):PrologueState {
  if(s.cue!==null&&(!record(s.cue)||!Object.hasOwn(narration,String(s.cue.id))||!Number.isInteger(s.cue.index)||Number(s.cue.index)<0||Number(s.cue.index)>=narration[s.cue.id as keyof typeof narration].length))throw new Error('잘못된 연출');
  if(!Array.isArray(s.log)||!s.log.length||!s.log.every(l=>record(l)&&['narrator','player','inquisitor'].includes(String(l.speaker))&&typeof l.text==='string')||!Number.isSafeInteger(s.revision)||Number(s.revision)<1)throw new Error('잘못된 로그');
  if(s.editResult!==null){if(!record(s.editResult)||s.editResult.sessionId!=='first-identity'||s.editResult.eventId!==identityEvent.id)throw new Error('잘못된 편집');const expected=commitDraft(identityEvent,s.editResult.selections,'first-identity').result;if(JSON.stringify(expected)!==JSON.stringify(s.editResult)||expected.selections.identity!=='apostle')throw new Error('편집 불일치');}
- if((s.environment.identity==='rewritten')!==(s.editResult!==null)||s.completed!==(s.playableId==='inquisitor')||(s.completed&&(!s.editResult||!validName(s.name)))||(s.phase==='core'&&s.environment.identity!=='unsealed')||(['dungeon','core'].includes(String(s.phase))&&s.guard!==0)||(['village','church'].includes(String(s.phase))&&!s.completed))throw new Error('인과관계 불일치');
- return s as unknown as PrologueState;
+ if((s.environment.identity==='rewritten')!==(s.editResult!==null)||s.completed!==(s.playableId==='inquisitor')||(s.completed&&(!s.editResult||!validName(s.name)))||(s.phase==='core'&&!['unsealed','placed'].includes(String(s.environment.identity)))||(['dungeon','core'].includes(String(s.phase))&&s.guard!==0)||(['village','church'].includes(String(s.phase))&&!s.completed))throw new Error('인과관계 불일치');
+ const decoded=s as unknown as PrologueState;
+ if(e.contentVersion==='first-act-1')decoded.dungeon.position={...dungeon.rooms.find(r=>r.id===decoded.dungeon.roomId)!.start};
+ if(e.contentVersion==='first-act-1')decoded.dungeon.position=safeSidePosition(decoded.dungeon.position,decoded.dungeon.roomId,decoded.environment);
+ return decoded;
 }
 export function createPrologueStore(storage?:StorageLike) {
  let loaded:PrologueState|null=null,error:string|null=null;
@@ -46,10 +50,10 @@ export function createPrologueStore(storage?:StorageLike) {
  return createStore<{
   progress:PrologueState;hasSave:boolean;error:string|null;actionError:string|null;
   start:()=>void;advance:(nodeId:string)=>void;choose:(nodeId:string,choiceId:string)=>void;ask:(id:string)=>void;collect:(id:string)=>void;finishQuestions:()=>void;enter:()=>void;name:(value:string)=>void;
-  checkpoint:(p:Point)=>void;travel:(id:string,p:Point)=>void;inspect:(id:string,p:Point)=>boolean;commitRule:(id:string,option:string)=>void;settle:()=>void;hit:(id:string,p:Point,now:number)=>void;retry:()=>void;
+  touch:(id:string,word:string|null,remove:boolean,p:Point)=>string|null;fall:()=>void;checkpoint:(p:Point)=>void;travel:(id:string,p:Point)=>void;inspect:(id:string,p:Point)=>boolean;commitRule:(id:string,option:string)=>void;settle:()=>void;hit:(id:string,p:Point,now:number)=>void;retry:()=>void;
   beginResistance:(keyword:string)=>void;beginSeal:()=>void;flip:()=>void;help:()=>void;cueNext:()=>void;core:()=>void;confirmCore:(draft:EditDraft)=>void;cancelCore:()=>void;visit:(id:string)=>void;church:()=>void;village:()=>void;retrySave:()=>void;
  }>()((set,get)=>{
-  const persist=(p:PrologueState)=>{let error:string|null=null;try{storage?.setItem(PROLOGUE_SAVE_KEY,JSON.stringify({version:1,contentVersion:'first-act-1',state:p}));}catch{error='자동 저장에 실패했습니다. 새로고침 전에 저장을 재시도하세요.';}set({progress:p,hasSave:true,error,actionError:null});};
+  const persist=(p:PrologueState)=>{let error:string|null=null;try{storage?.setItem(PROLOGUE_SAVE_KEY,JSON.stringify({version:1,contentVersion:'first-act-side-2',state:p}));}catch{error='자동 저장에 실패했습니다. 새로고침 전에 저장을 재시도하세요.';}set({progress:p,hasSave:true,error,actionError:null});};
   const change=(p:PrologueState)=>persist({...p,revision:get().progress.revision+1});
   const move=(p:PrologueState,id:string)=>{
    const m=meta[id],n=getDialogue(scenario,id),next={...p,phase:'story' as PrologueState['phase'],nodeId:id,cue:null,log:[...p.log,{speaker:n.speaker,text:n.text}]};
@@ -60,7 +64,7 @@ export function createPrologueStore(storage?:StorageLike) {
    if(m.mode==='village')next.phase='village';
    return next;
   };
-  const near=(id:string,point:Point)=>{const p=get().progress,r=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;const o=r.objects.find(o=>o.id===id);return p.phase==='dungeon'&&p.dungeon.stability>0&&validPosition(point,r)&&o&&Math.hypot(point.x-o.x,point.y-o.y)<=dungeon.rules.interactionRadius+8?o:null;};
+  const near=(id:string,point:Point)=>{const p=get().progress,r=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;const o=r.objects.find(o=>o.id===id);return ['dungeon','core'].includes(p.phase)&&!p.cue&&p.dungeon.stability>0&&validPosition(point,r)&&o&&Math.hypot(point.x-o.x,point.y-o.y)<=dungeon.rules.interactionRadius+8?o:null;};
   const event=(events:string[],id:string)=>events.includes(id)?events:[...events,id];
   return {progress:loaded??initial(),hasSave:!!loaded,error,actionError:null,
    start:()=>persist(initial()),
@@ -71,8 +75,37 @@ export function createPrologueStore(storage?:StorageLike) {
    finishQuestions:()=>{const p=get().progress;if(p.phase==='story'&&p.nodeId==='questions'&&questions.every(q=>p.questions.includes(q.id)))change(move(p,'infiltrate'));},
    enter:()=>{const p=get().progress;if(p.phase!=='story'||p.nodeId!=='infiltrate'||p.guard!==0)return;change({...p,phase:'dungeon'});},
    name:value=>{const p=get().progress;if(p.phase!=='story'||meta[p.nodeId].mode!=='name')return;if(!validName(value)){set({actionError:'이름은 공백을 제외하고 1~20자로 입력해 주세요.'});return;}change(move({...p,name:value.trim()},getDialogue(scenario,p.nodeId).next!));},
-   checkpoint:position=>{const p=get().progress;if(p.phase!=='dungeon')return;const room=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;change({...p,dungeon:{...p.dungeon,position:safePosition(position,room)}});},
-   travel:(id,position)=>{const p=get().progress,o=near(id,position);if(!o||o.kind!=='door')return;if(!exitAvailable(id,p.environment)){set({actionError:id==='to_chapel'?'다리를 펼치고 건너편 인형의 기억을 확인하세요.':'봉인 뒤의 무대를 먼저 펼치세요.'});return;}change({...p,dungeon:{...p.dungeon,roomId:o.targetRoom!,position:o.spawn!}});},
+   fall:()=>{const p=get().progress;if(!['dungeon','core'].includes(p.phase)||p.cue)return;const room=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;change({...p,dungeon:{...p.dungeon,position:safeSidePosition(room.start,room.id,p.environment)}});},
+   touch:(id,word,remove,position)=>{
+    const p=get().progress,o=near(id,position);if(!o)return null;
+    if(remove&&!slots.some(slot=>slot.objectId===id)&&!(id==='identity_belief'&&p.environment.identity==='placed'))return null;
+    if(o.kind==='door'){get().travel(id,position);return null;}
+    if(!get().inspect(id,position))return null;
+    const slot=slots.find(s=>s.objectId===id);
+    if(slot){try{const option=slotOption(slot,get().progress.environment,word,remove);get().commitRule(slot.ruleId,option);return get().actionError??(remove?messages.removed:messages.inserted);}catch(e){const message=e instanceof Error?e.message:messages.wrongWord;set({actionError:message});return message;}}
+    if(id==='keyword_cache')return messages.cache;
+    if(id==='altar_seal'){
+     if(p.environment.seal==='broken')return o.text;
+     if(!p.sealAttempted){get().beginSeal();return messages.sealed;}
+     if(!p.sealFlipped){get().flip();return messages.flipped;}
+     get().help();return null;
+    }
+    if(id==='identity_belief'){
+     if(p.environment.identity==='sealed'){if(word)get().beginResistance(word);return get().progress.cue?null:messages.needWord;}
+     if(p.environment.identity==='resisting'){get().help();return null;}
+     if(['unsealed','placed'].includes(p.environment.identity)){
+      if(!remove&&word!==identityText.tokenId)return messages.wrongWord;
+      const current=get().progress;change({...current,phase:'core',environment:{...current.environment,identity:remove?'unsealed':'placed'}});return remove?messages.removed:messages.finalReady;
+     }
+    }
+    if(id==='final_threshold'){
+     if(p.environment.identity!=='placed')return messages.finalLocked;
+     change({...get().progress,phase:'core'});get().confirmCore({identity:'apostle'});return null;
+    }
+    return o.text;
+   },
+   checkpoint:position=>{const p=get().progress;if(!['dungeon','core'].includes(p.phase))return;const safe=safeSidePosition(position,p.dungeon.roomId,p.environment);if(Math.hypot(safe.x-p.dungeon.position.x,safe.y-p.dungeon.position.y)<1)return;change({...p,dungeon:{...p.dungeon,position:safe}});},
+   travel:(id,position)=>{const p=get().progress,o=near(id,position);if(!o||o.kind!=='door')return;if(!exitAvailable(id,p.environment)){set({actionError:id==='to_chapel'?'다리를 펼치고 건너편 인형의 기억을 확인하세요.':'봉인 뒤의 무대를 먼저 펼치세요.'});return;}change({...p,phase:'dungeon',dungeon:{...p.dungeon,roomId:o.targetRoom!,position:safeSidePosition(o.spawn!,o.targetRoom!,p.environment)}});},
    inspect:(id,position)=>{const p=get().progress,o=near(id,position);if(!o)return false;
     if(id==='altar_seal'&&(p.environment.negation!=='detached'||p.environment.door!=='open')){set({actionError:'부정어를 분리하고 문을 먼저 열어야 합니다.'});return false;}
     if(id==='keyword_cache'){change({...p,keywords:keywords.map(k=>k.id),dungeon:{...p.dungeon,position}});return true;}
@@ -81,8 +114,7 @@ export function createPrologueStore(storage?:StorageLike) {
    },
    commitRule:(id,optionId)=>{const p=get().progress,r=rules.find(r=>r.id===id);if(!r||!near(r.objectId,p.dungeon.position))return;
     try{const environment=applyRule(p.environment,r,optionId,p.keywords),option=r.options.find(o=>o.id===optionId)!;if(environment[r.stateKey]===p.environment[r.stateKey])return;
-     let position=p.dungeon.position;const room=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;
-     if(texts.some(t=>t.roomId===room.id&&textPhysics(t,environment).solid&&position.x+18>t.x&&position.x-18<t.x+t.w&&position.y+18>t.y&&position.y-18<t.y+t.h))position=room.start;
+     const position=safeSidePosition(p.dungeon.position,p.dungeon.roomId,environment);
      change({...p,environment,events:event(p.events,option.resultId),doorOpensAt:r.stateKey==='door'?(option.value==='waiting'?Date.now()+(option.delayMs??4000):null):p.doorOpensAt,dungeon:{...p.dungeon,position}});
     }catch(e){set({actionError:e instanceof Error?e.message:'편집 실패'});}
    },

@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import LegacyGame from '../App';
 import { ChoiceList, DialogueBox, DialogueLog } from '../components/Dialogue';
-import { MindEditScreen } from '../screens/MindEditScreen';
 import { getDialogue } from '../domain/scenario';
-import { scenario, meta, keywords, questions, identityEvent, village } from './content';
+import { scenario, meta, keywords, questions, village } from './content';
 import { createPrologueStore } from './store';
 import { PrologueDungeon } from './PrologueDungeon';
 import './prologue.css';
@@ -20,7 +19,7 @@ export default function PrologueApp(){
  if(legacy||p.phase==='church')return <div className="legacy-integration"><button className="back-village" onClick={()=>{if(p.phase==='church')game.village();else setMenu(true);setLegacy(false);}}> {p.phase==='church'?`${p.name} · 세루스로 돌아가기`:'프롤로그 타이틀로'}</button><LegacyGame playerName={p.completed?p.name:undefined}/></div>;
  const start=()=>{game.start();setMenu(false);setConfirm(false);setName('');};
  const title=()=>{setMenu(true);setLog(false);setLedger(false);};
- const scene=p.phase==='dungeon'?'dungeon':p.phase==='core'?'altar':m.scene;
+ const scene=['dungeon','core'].includes(p.phase)?'dungeon':m.scene;
  const visual=<div className={`pro-stage scene-${m.scene} ${m.mode==='infiltrate'?'await-touch':''} ${m.mode==='transfer'?'transferring':''}`}>
    <img className="pro-backdrop" src={`/assets/prologue/${m.scene}.svg`} alt=""/>
    {m.scene==='theatre'?<><div className="puppeteer-shadow"/><img className="stage-hand left" src="/assets/prologue/hand.svg" alt="얼굴 없는 인형사의 손"/><img className="stage-hand right" src="/assets/prologue/hand.svg" alt=""/><div className="sun-puppet"><span>☀</span><i/></div><img className="theatre-puppet" src="/assets/prologue/inquisitor.svg" alt="실에 매달린 금발 인형"/><div className="puppet-thread"/></>:
@@ -30,8 +29,7 @@ export default function PrologueApp(){
  return <main className={`prologue-app ${reduced?'reduced-effects':''} phase-${p.phase} scene-${scene}`}>
   <header className="pro-header"><span>THE FIRST ACT <i/> {menu?'기억은 누구의 것인가':p.phase==='village'?`제1장 · ${p.name}`:'프롤로그 · 최초의 사도'}</span><nav><button aria-pressed={reduced} onClick={()=>setReduced(v=>!v)}>연출 {reduced?'약하게':'보통'}</button>{!menu&&<button onClick={title}>타이틀</button>}</nav></header>
   {menu?<section className="pro-title"><img src="/assets/prologue/theatre.svg" alt="붉은 막과 조잡한 인형극 무대"/><div><p>당신의 자리는 아직, 객석에 있습니다.</p><h1>니알라토텝의 사도</h1><p className="pro-subtitle">THE APOSTLE · PROLOGUE</p>{confirm?<div className="pro-confirm"><p>프롤로그 저장을 교체하고 새 공연을 시작할까요?<br/>기존 에밀리아 테스트 저장은 유지됩니다.</p><button onClick={()=>setConfirm(false)}>취소</button><button onClick={start}>새 공연 시작</button></div>:<><button className="pro-main-button" onClick={()=>game.hasSave||game.error?setConfirm(true):start()}>막을 올리다</button>{game.hasSave&&<button onClick={()=>setMenu(false)}>이어서 관람하기</button>}<button className="pro-legacy-link" onClick={()=>setLegacy(true)}>기존 에밀리아 테스트 이어하기</button></>}</div></section>:
-   p.phase==='dungeon'?<PrologueDungeon store={store} reduced={reduced} onTitle={title}/>:
-   p.phase==='core'?<div className="pro-core is-dungeon-edit"><img className="core-hand" src="/assets/prologue/hand.svg" alt="봉인을 해체하는 거대한 손"/><MindEditScreen event={identityEvent} characterName={speaker('inquisitor')} error={game.actionError} confirm={game.confirmCore} cancel={game.cancelCore} cancelHint="취소하면 제단으로 돌아갑니다. 확정해야 새로운 정체성이 기억에 남습니다."/></div>:
+   (p.phase==='dungeon'||p.phase==='core')?<PrologueDungeon store={store} reduced={reduced} onTitle={title}/>:
    p.phase==='village'?<section className="pro-village"><img src="/assets/prologue/village.svg" alt="변방 마을 세루스"/><img className="village-avatar" src="/assets/prologue/priest.svg" alt={`${p.name}, 이제 당신이 조작하는 최초의 사도`}/><div><p>DAY 01 · 세루스</p><h1>{p.name}, 당신의 사명</h1><p>나는 니알라토텝의 사도다.</p><div className="village-locations">{village.map(v=><button key={v.id} onClick={()=>{game.visit(v.id);setLocation(v.id);}}>{v.name}<small>{p.visited.includes(v.id)?'조사한 장소':'조사하기'}</small></button>)}</div>{location&&<article><h2>{village.find(v=>v.id===location)?.name}</h2><p>{village.find(v=>v.id===location)?.text}</p></article>}<button className="pro-main-button" onClick={game.church}>밤 · 교회에서 방문자 맞이하기</button><small>이후의 교회는 기존 에밀리아 테스트 시나리오로 연결됩니다.</small></div></section>:
    <section className="pro-story" key={p.nodeId}>
     {visual}
