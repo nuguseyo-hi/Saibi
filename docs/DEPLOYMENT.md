@@ -11,7 +11,7 @@ node scripts/prepare-pages.mjs /Saibi/ dist
 
 준비된 `dist`의 내용만 `gh-pages` 브랜치 루트에 올린다. 소스, 백업, 로컬 설정, `node_modules`는 배포 브랜치에 포함하지 않는다. 기존 `gh-pages` 커밋을 부모로 사용하고 강제 푸시는 하지 않는다.
 
-저장소 **Settings → Pages → Build and deployment**에서 다음을 한 번 설정한다.
+첫 `gh-pages` 푸시로 Pages 배포가 자동 시작되면 추가 설정은 필요 없다. 이 저장소의 첫 배포도 자동 시작되어 성공했다. 자동 배포가 시작되지 않는 저장소에서만 **Settings → Pages → Build and deployment**에서 다음을 한 번 설정한다.
 
 - Source: **Deploy from a branch**
 - Branch: **gh-pages**
