@@ -1,0 +1,7 @@
+{
+  "version": "before-strikethrough-rework",
+  "source_commit": "d16d72cc618f6a3d246d75a1c5cbb3032f11ee5a",
+  "original_deployment_commit": "55d2dfa",
+  "base": "/Saibi/original/",
+  "save_keys_isolated": true
+}
