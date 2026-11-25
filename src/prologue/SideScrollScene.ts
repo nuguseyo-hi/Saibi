@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { DungeonObject, Point } from '../dungeon/model';
 import { dungeon, rules, reverseMemory } from './content';
-import { physics as config, sideRoom, surfaces, closedGates, safeSidePosition, slots, slotInserted, identityText, scenery } from './sideScroll';
+import { physics as config, sideRoom, surfaces, closedGates, safeSidePosition, slots, slotInserted, identityText, scenery, puppetArt } from './sideScroll';
 import type { PrologueState } from './store';
 export interface SideBridge {
  read:()=>PrologueState; paused:()=>boolean; reduced:()=>boolean; word:()=>{id:string;label:string}|null;
@@ -54,10 +54,10 @@ export class SideScrollScene extends Phaser.Scene {
   this.actor=this.add.rectangle(180,570,config.bodyWidth,config.bodyHeight,0xffffff,0).setDepth(8);
   this.physics.add.existing(this.actor);const body=this.body();body.setCollideWorldBounds(true);body.setGravityY(config.gravity);body.setMaxVelocity(300,700);
   this.physics.add.collider(this.actor,this.terrain);
-  this.puppet=this.add.image(180,570,'side-vessel').setDisplaySize(76,130).setDepth(9);
+  this.puppet=this.add.image(180,570,'side-vessel').setDisplaySize(puppetArt.width,puppetArt.height).setOrigin(.5,puppetArt.footY/puppetArt.sourceHeight).setDepth(9);
   this.held=this.add.text(0,0,'',{fontFamily:'Memory Serif, serif',fontSize:'18px',color:'#432c31',backgroundColor:'#ead9af',padding:{x:10,y:7}}).setOrigin(.5).setAngle(-6).setDepth(10);
   this.thread=this.add.graphics().setDepth(7);
-  const keyboard=this.input.keyboard!;keyboard.disableGlobalCapture();
+  const keyboard=this.input.keyboard!;
   this.keys=keyboard.addKeys('A,D,LEFT,RIGHT,SPACE,E,R') as Record<string,Phaser.Input.Keyboard.Key>;
   this.cameras.main.setBounds(0,0,room.width,720);this.cameras.main.startFollow(this.actor,true,1,1);this.cameras.main.setDeadzone(300,720);
   this.refresh();this.teleport(safeSidePosition(p.dungeon.position,room.id,p.environment));this.positionKey=this.savedKey();
@@ -82,6 +82,12 @@ export class SideScrollScene extends Phaser.Scene {
   for(const r of surfaces(this.roomId,env))addSurface(r);
   for(const gate of closedGates(this.roomId,env)){addSurface(gate,true);this.terrainArt.add(this.add.text(gate.x+gate.w/2,gate.y+35,[...gate.label].join('\n'),{fontFamily:'Memory Serif, serif',fontSize:'28px',color:'#d7b98b',align:'center'}).setOrigin(.5,0));}
   const bridge=sideRoom(this.roomId).bridge;if(bridge&&env.bridge!=='open')this.terrainArt.add(this.add.text(bridge.x+bridge.w/2,650,scenery.abyss,{fontFamily:'Memory Serif, serif',fontSize:'21px',color:'#bca383'}).setOrigin(.5));
+  if(bridge&&env.bridge==='open'){
+   const underline=this.add.graphics();underline.lineStyle(3,0xf0d5a6,1);underline.lineBetween(bridge.x,bridge.y,bridge.x+bridge.w,bridge.y);
+   this.terrainArt.add(underline);
+   const sentence=rules.find(r=>r.id==='bridge_rule')!.options.find(o=>o.value==='open')!.text;
+   this.terrainArt.add(this.add.text(bridge.x+bridge.w/2,bridge.y+4,sentence,{fontFamily:'Memory Serif, serif',fontSize:'18px',color:'#4b2932'}).setOrigin(.5,0));
+  }
   const room=dungeon.rooms.find(r=>r.id===this.roomId)!;
   for(const o of room.objects){
    const slot=slots.find(s=>s.objectId===o.id),rule=slot?rules.find(r=>r.id===slot.ruleId):undefined;
@@ -123,8 +129,7 @@ export class SideScrollScene extends Phaser.Scene {
   if(Phaser.Input.Keyboard.JustDown(this.keys.SPACE))this.jumpQueued=time;
   if(this.jumpQueued>0&&time-this.jumpQueued<120&&time-this.lastGrounded<100){body.setVelocityY(-config.jumpSpeed);this.jumpQueued=0;this.lastGrounded=-1000;}
   if(this.actor.y>805){this.bridge.fall();const state=this.bridge.read();this.teleport(safeSidePosition(state.dungeon.position,this.roomId,state.environment));return;}
-  const bob=!this.bridge.reduced()&&axis&&body.blocked.down?Math.round(Math.sin(time/100)*2)*2:0;
-  this.puppet.setPosition(this.actor.x,this.actor.y-15+bob).setFlipX(this.facing<0).setAngle(axis&&!this.bridge.reduced()?this.facing*3:0);
+  this.puppet.setPosition(this.actor.x,body.bottom).setFlipX(this.facing<0).setAngle(axis&&!this.bridge.reduced()?this.facing*3:0);
   const word=this.bridge.word();this.held.setText(word?.label??'').setVisible(!!word).setPosition(this.actor.x+this.facing*48,this.actor.y-28);
   const room=dungeon.rooms.find(r=>r.id===this.roomId)!;
   const nearby=room.objects.filter(o=>Math.hypot(o.x-this.actor.x,o.y-this.actor.y)<=dungeon.rules.interactionRadius).sort((a,b)=>Math.abs(a.x-this.actor.x)-Math.abs(b.x-this.actor.x))[0]??null;
@@ -132,6 +137,6 @@ export class SideScrollScene extends Phaser.Scene {
   this.thread.clear();if(nearby){this.thread.lineStyle(2,0xb54f5d,.75);this.thread.lineBetween(this.actor.x+this.facing*30,this.actor.y-20,nearby.x,455);}
   const remove=Phaser.Input.Keyboard.JustDown(this.keys.R),use=Phaser.Input.Keyboard.JustDown(this.keys.E);
   if(nearby&&(use||remove))this.bridge.interact(nearby,this.position(),remove);
-  if(time-this.lastCheckpoint>2500&&body.blocked.down){this.lastCheckpoint=time;this.bridge.checkpoint(this.position());}
+  if(time-this.lastCheckpoint>2500&&body.blocked.down&&body.velocity.y===0){this.lastCheckpoint=time;this.bridge.checkpoint(this.position());}
  }
 }

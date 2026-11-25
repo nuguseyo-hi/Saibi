@@ -5,6 +5,7 @@ import type { DungeonObject, Point } from '../dungeon/model';
 import type { SideScrollScene } from './SideScrollScene';
 import { dungeon, keywords, narration } from './content';
 import { slots, slotInserted, messages, identityText } from './sideScroll';
+import { stageInput } from './stageInput';
 import type { PrologueStore } from './store';
 export function PrologueDungeon({store,reduced,onTitle}:{store:PrologueStore;reduced:boolean;onTitle:()=>void}) {
  const p=useStore(store,s=>s.progress),error=useStore(store,s=>s.actionError);
@@ -32,7 +33,7 @@ export function PrologueDungeon({store,reduced,onTitle}:{store:PrologueStore;red
     interact:(o,pos,remove)=>interactRef.current(o,pos,remove),nearby:o=>{if(!disposed)setNearby(o);},checkpoint:pos=>store.getState().checkpoint(pos),
     fall:()=>{store.getState().fall();setNotice(messages.fall);},ready:()=>{if(!disposed){setLoaded(true);element.focus();}}
    });scene.current=instance;
-   game=new Phaser.Game({type:Phaser.AUTO,parent:element,width:1280,height:720,backgroundColor:'#18131b',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},physics:{default:'arcade',arcade:{gravity:{x:0,y:0},debug:false}},audio:{noAudio:true},scene:[instance]});
+   game=new Phaser.Game({type:Phaser.AUTO,parent:element,input:stageInput(element),width:1280,height:720,backgroundColor:'#18131b',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},physics:{default:'arcade',arcade:{gravity:{x:0,y:0},debug:false}},audio:{noAudio:true},scene:[instance]});
   }).catch(()=>{if(!disposed)setLoadError(true);});
   const preventWheel=(event:WheelEvent)=>event.preventDefault();element.addEventListener('wheel',preventWheel,{passive:false});
   const save=()=>{if(scene.current)store.getState().checkpoint(scene.current.position());};window.addEventListener('pagehide',save);window.addEventListener('blur',save);
@@ -51,7 +52,7 @@ export function PrologueDungeon({store,reduced,onTitle}:{store:PrologueStore;red
  if(nearby?.id==='altar_seal')actionLabel=!p.sealAttempted?'봉인에 손대기':!p.sealFlipped?'종이 뒤집기':'나레이터의 손 잡기';
  return <section className="pro-dungeon side-dungeon" onKeyDown={e=>{
   if(e.key==='Escape'){e.stopPropagation();if(pause){setPause(false);requestAnimationFrame(focus);}else if(!p.cue){checkpoint();setPause(true);}}
-  if(e.target===host.current){if(e.key.startsWith('Arrow')||e.key===' ')e.preventDefault();const number=Number(e.key);if(Number.isInteger(number)&&number>=1&&number<=words.length)select(words[number-1].id);}
+  if(e.target===host.current){const number=Number(e.key);if(Number.isInteger(number)&&number>=1&&number<=words.length)select(words[number-1].id);}
  }}>
   <div className="pro-dungeon-head"><div><small>{room.subtitle}</small><h1>{room.name}</h1></div><button onClick={()=>{checkpoint();setPause(true);}}>잠시 멈춤</button></div>
   <div className="dungeon-frame side-frame" onWheel={e=>{if(!pause&&!p.cue&&e.deltaY)cycle(e.deltaY>0?1:-1);}}>

@@ -17,6 +17,8 @@ for(const room of raw.rooms){
 }
 check(new Set(raw.slots.map(s=>s.objectId)).size===raw.slots.length,'slot IDs');
 for(const slot of raw.slots){const rule=rules.find(r=>r.id===slot.ruleId);check(rule&&rule.objectId===slot.objectId&&['word','toggle'].includes(slot.mode),'slot');for(const id of [slot.insert,slot.remove])check(rule.options.some(o=>o.id===id),'slot option');if(slot.mode==='word')check('keywordId' in slot&&rule.options.find(o=>o.id===slot.insert)?.keywordId===slot.keywordId,'word ownership');}
+check(raw.puppet.footY>0&&raw.puppet.footY<=raw.puppet.sourceHeight,'puppet baseline');
+export const puppetArt=raw.puppet;
 export const sideRooms=raw.rooms as SideRoom[],slots=raw.slots as DirectSlot[],physics=raw.physics,messages=raw.messages,identityText=raw.identity,scenery=raw.scenery;
 export const sideRoom=(id:string)=>sideRooms.find(r=>r.id===id)!;
 export function surfaces(id:string,e:EnvironmentState):Rect[]{const r=sideRoom(id);return [...r.platforms,...(r.bridge&&e.bridge==='open'?[r.bridge]:[])];}

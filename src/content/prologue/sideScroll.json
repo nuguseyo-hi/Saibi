@@ -22,12 +22,6 @@
           "y": 620,
           "w": 948,
           "h": 100
-        },
-        {
-          "x": 350,
-          "y": 580,
-          "w": 90,
-          "h": 40
         }
       ],
       "bridge": {
@@ -189,5 +183,11 @@
     "abyss": "찢어진 기억",
     "originalOrder": "믿음\n     심판",
     "swappedOrder": "심판\n     믿음"
+  },
+  "puppet": {
+    "width": 76,
+    "height": 130,
+    "sourceHeight": 680,
+    "footY": 634
   }
 }
