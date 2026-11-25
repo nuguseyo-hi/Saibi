@@ -34,7 +34,7 @@ export class SideScrollScene extends Phaser.Scene {
   this.roomId=room.id;this.envKey='';this.nearId='';this.folding=false;this.oldCanceled=[];this.companions=[];this.lastCue='';
   this.physics.world.setBounds(62,70,room.width-124,850);
   this.add.image(640,360,`side-bg-${room.id}`).setDisplaySize(1280,720).setScrollFactor(0).setAlpha(.7);
-  this.shade=this.add.rectangle(640,360,1280,720,0x100d21,.22).setScrollFactor(0).setDepth(1);
+  this.shade=this.add.rectangle(640,360,1280,720,0x100d21,1).setScrollFactor(0).setDepth(1);
   this.terrainArt=this.add.container(0,0).setDepth(2);this.terrain=this.physics.add.staticGroup();
   for(const o of this.objects()){
    if(o.kind==='door'||o.id==='final_threshold')this.add.image(o.x,510,'side-door').setDisplaySize(110,210).setAlpha(.8).setDepth(3);
