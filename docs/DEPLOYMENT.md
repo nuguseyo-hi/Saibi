@@ -11,6 +11,12 @@ node scripts/prepare-pages.mjs /Saibi/ dist
 
 준비된 `dist`의 내용만 `gh-pages` 브랜치 루트에 올린다. 소스, 백업, 로컬 설정, `node_modules`는 배포 브랜치에 포함하지 않는다. 기존 `gh-pages` 커밋을 부모로 사용하고 강제 푸시는 하지 않는다.
 
+## 비교용 기존 버전
+
+취소선 리워크 직전 버전은 [별도 플레이 주소](https://nuguseyo-hi.github.io/Saibi/original/)에 고정한다. `gh-pages`의 `original/` 디렉터리가 해당 산출물이다. **이후 수정본을 루트에 배포할 때도 `original/`을 보존한다.** 전체 디렉터리를 지우거나 `rsync --delete`할 때 이 경로를 제외해야 한다.
+
+원본은 소스 `d16d72c`와 실행 코드가 같은 기존 배포 `55d2dfa`에서 복구했다. 실행 코드의 게임 규칙은 유지하고 에셋 기준 경로만 `/Saibi/original/`로 조정했다. 같은 호스트의 localStorage는 경로로 분리되지 않으므로 이 산출물의 저장 키를 `saibi.original.prologue.v1`, `nyarlathotep-vn.original.save.v1`로 분리했다. 수정본의 기존 저장은 읽거나 덮어쓰지 않는다. 원본 빌드 정보는 `original/release.json`에 기록한다.
+
 첫 `gh-pages` 푸시로 Pages 배포가 자동 시작되면 추가 설정은 필요 없다. 이 저장소의 첫 배포도 자동 시작되어 성공했다. 자동 배포가 시작되지 않는 저장소에서만 **Settings → Pages → Build and deployment**에서 다음을 한 번 설정한다.
 
 - Source: **Deploy from a branch**
