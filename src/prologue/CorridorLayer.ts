@@ -8,6 +8,7 @@ interface Bridge {read:()=>PrologueState;position:()=>Point;paused:()=>boolean;r
 export class CorridorLayer {
  private scene:Phaser.Scene;private b:Bridge;private ink:Phaser.GameObjects.Container;
  private blanks:Record<CorridorSlot,Phaser.GameObjects.Text>;private frames:Phaser.GameObjects.Text[]=[];
+ private bridgeSuffix:Phaser.GameObjects.Text;
  private bones:Phaser.GameObjects.Image[]=[];private why:Phaser.GameObjects.Text[]=[];private puppets:Phaser.GameObjects.Container[]=[];private tears:Phaser.GameObjects.Graphics[]=[];
  private denial:Phaser.GameObjects.Text;private beam:Phaser.GameObjects.Graphics;private sun:Phaser.GameObjects.Container;
  private oldBridge:boolean;private lastCue='';private busyUntil=0;private rejection?:Phaser.GameObjects.Text;
@@ -21,7 +22,7 @@ export class CorridorLayer {
   this.ink=scene.add.container(0,0).setDepth(5);
   const paper=scene.add.graphics();paper.fillStyle(0xe2cfaa,.94);paper.fillPoints([{x:464,y:337},{x:939,y:344},{x:935,y:432},{x:471,y:437}],true);paper.lineStyle(2,0x7f6b61,.75);paper.lineBetween(476,428,930,423);this.ink.add(paper);
   this.ink.add(scene.add.text(505,384,corridor.bridge.prefix,{...serif,color:'#3e2b34'}).setOrigin(0,.5));
-  this.ink.add(scene.add.text(804,384,corridor.bridge.suffix,{...serif,color:'#3e2b34'}).setOrigin(0,.5));
+  this.bridgeSuffix=scene.add.text(804,384,corridor.bridge.suffix,{...serif,color:'#3e2b34'}).setOrigin(0,.5);this.ink.add(this.bridgeSuffix);
   const blank=(slot:CorridorSlot)=>{const s=corridor[slot];return scene.add.text(s.x,s.y,s.empty,{...serif,color:'#612f40',backgroundColor:'#ead7b3',padding:{x:14,y:7}}).setFixedSize(s.w,s.h).setOrigin(.5).setAlign('center').setDepth(7).setInteractive({useHandCursor:true}).on('pointerdown',()=>{if(!bridge.paused()&&!this.busy)bridge.insert(slot,false,bridge.position());});};
   this.blanks={bridge:blank('bridge'),door:blank('door')};
   for(let i=0;i<15;i++){
@@ -53,6 +54,7 @@ export class CorridorLayer {
  update(){
   const p=this.b.read(),built=!!p.corridor.bridgeWord,door=!!p.corridor.doorWord,reduced=this.b.reduced();
   this.blanks.bridge.setText(p.cue?.id==='corridor_sun'?'태양의 신':built?'동료':corridor.bridge.empty);this.blanks.door.setText(door?'배신':corridor.door.empty);
+  this.bridgeSuffix.setText(p.cue?.id==='corridor_sun'?corridor.bridge.sunSuffix:corridor.bridge.suffix);
   const changed=built!==this.oldBridge;
   if(changed){
    this.busyUntil=this.scene.time.now+(reduced?0:1050);
