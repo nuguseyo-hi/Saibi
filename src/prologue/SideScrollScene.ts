@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import type { DungeonObject, Point } from '../dungeon/model';
 import { dungeon, reverseMemory } from './content';
 import { physics as config, sideRoom, surfaces, closedGates, safeSidePosition, puppetArt, slots } from './sideScroll';
+import { CorridorLayer } from './CorridorLayer';
+import type { CorridorSlot } from './corridor';
 import { StrikeLayer } from './StrikeLayer';
 import { readRealm, roomEnvironment, strikeRoom } from './strikes';
 import type { InkStroke, InkRoom, Realm } from './strikes';
@@ -9,6 +11,7 @@ import type { PrologueState } from './store';
 export interface SideBridge {
  read:()=>PrologueState;paused:()=>boolean;reduced:()=>boolean;
  interact:(o:DungeonObject,p:Point)=>void;nearby:(o:DungeonObject|null)=>void;
+ corridor:(slot:CorridorSlot,remove:boolean,position:Point)=>void;
  edit:(stroke:InkStroke|null,position:Point)=>void;preview:(realm:Realm|undefined)=>void;
  checkpoint:(p:Point)=>void;fall:()=>void;ready:()=>void;
 }
@@ -17,30 +20,31 @@ export class SideScrollScene extends Phaser.Scene {
  private bridge:SideBridge;
  private actor!:Phaser.GameObjects.Rectangle;private puppet!:Phaser.GameObjects.Image;
  private terrain!:Phaser.Physics.Arcade.StaticGroup;private terrainArt!:Phaser.GameObjects.Container;
- private keys!:Record<string,Phaser.Input.Keyboard.Key>;private inkLayer!:StrikeLayer;
+ private keys!:Record<string,Phaser.Input.Keyboard.Key>;private inkLayer?:StrikeLayer;private corridorLayer?:CorridorLayer;
  private subject!:Phaser.GameObjects.Image;private subjectShadow!:Phaser.GameObjects.Image;private strings!:Phaser.GameObjects.Graphics;private shade!:Phaser.GameObjects.Rectangle;
  private companions:Phaser.GameObjects.Image[]=[];private truth!:Phaser.GameObjects.Text;
  private roomId='';private envKey='';private positionKey='';private nearId='';private facing=1;private lastCheckpoint=0;private lastGrounded=0;private jumpQueued=0;private wasPaused=false;private folding=false;private oldCanceled:string[]=[];
  private lastCue='';
  constructor(bridge:SideBridge){super('PrologueSideScroll');this.bridge=bridge;}
  preload(){
-  this.load.image('side-vessel','/assets/prologue/vessel.svg');this.load.image('side-inquisitor','/assets/prologue/inquisitor.svg');
+  this.load.image('side-skull','/assets/prologue/skull-bone.svg');this.load.image('side-vessel','/assets/prologue/vessel.svg');this.load.image('side-inquisitor','/assets/prologue/inquisitor.svg');
   this.load.image('side-paper',dungeon.art.paper);this.load.image('side-door',dungeon.art.door);this.load.image('side-hand','/assets/prologue/hand.svg');
   for(const room of dungeon.rooms)this.load.image(`side-bg-${room.id}`,room.backgroundImage!);
  }
- private objects(){return dungeon.rooms.find(r=>r.id===this.roomId)!.objects.filter(o=>!slots.some(s=>s.objectId===o.id)&&!['identity_belief','identity_judgment','sealed_belief'].includes(o.id));}
+ private objects(){if(this.roomId==='betrayal')return dungeon.rooms[0].objects.filter(o=>['trust_bridge','betrayal_memory','betrayal_door','to_chapel'].includes(o.id));return dungeon.rooms.find(r=>r.id===this.roomId)!.objects.filter(o=>!slots.some(s=>s.objectId===o.id)&&!['identity_belief','identity_judgment','sealed_belief'].includes(o.id));}
  create(){
   const p=this.bridge.read(),room=dungeon.rooms.find(r=>r.id===p.dungeon.roomId)!;
   this.roomId=room.id;this.envKey='';this.nearId='';this.folding=false;this.oldCanceled=[];this.companions=[];this.lastCue='';
+  this.inkLayer=undefined;this.corridorLayer=undefined;
   this.physics.world.setBounds(62,70,room.width-124,850);
   this.add.image(640,360,`side-bg-${room.id}`).setDisplaySize(1280,720).setScrollFactor(0).setAlpha(.7);
   this.shade=this.add.rectangle(640,360,1280,720,0x100d21,1).setScrollFactor(0).setDepth(1);
   this.terrainArt=this.add.container(0,0).setDepth(2);this.terrain=this.physics.add.staticGroup();
-  for(const o of this.objects()){
+  for(const o of this.roomId==='betrayal'?[]:this.objects()){
    if(o.kind==='door'||o.id==='final_threshold')this.add.image(o.x,510,'side-door').setDisplaySize(110,210).setAlpha(.8).setDepth(3);
    this.add.text(o.x,440,o.title,{fontFamily:'Memory Serif, serif',fontSize:'21px',color:'#ead5ab',align:'center',wordWrap:{width:220},backgroundColor:'#251b29',padding:{x:12,y:9}}).setOrigin(.5).setDepth(4);
   }
-  if(room.id==='betrayal')for(let i=0;i<2;i++)this.companions.push(this.add.image(1030+i*100,472,'side-inquisitor').setDisplaySize(67,150).setAngle(i?10:-10).setDepth(3));
+
   this.subjectShadow=this.add.image(1150,478,'side-inquisitor').setDisplaySize(125,212).setTint(0x120e20).setAlpha(.7).setScrollFactor(0).setDepth(6);
   this.subject=this.add.image(1138,470,'side-inquisitor').setDisplaySize(120,204).setScrollFactor(0).setDepth(7);
   this.strings=this.add.graphics().setScrollFactor(0).setDepth(6);
@@ -50,24 +54,29 @@ export class SideScrollScene extends Phaser.Scene {
   this.puppet=this.add.image(180,570,'side-vessel').setDisplaySize(puppetArt.width,puppetArt.height).setOrigin(.5,puppetArt.footY/puppetArt.sourceHeight).setDepth(9);
   this.keys=this.input.keyboard!.addKeys('A,D,LEFT,RIGHT,SPACE,E') as Record<string,Phaser.Input.Keyboard.Key>;
   this.cameras.main.setBounds(0,0,room.width,720);this.cameras.main.startFollow(this.actor,true,1,1);this.cameras.main.setDeadzone(300,720);
-  this.inkLayer=new StrikeLayer(this,room.id,{read:this.bridge.read,position:()=>this.position(),suspended:this.bridge.paused,commit:s=>this.bridge.edit(s,this.position()),preview:this.bridge.preview});
-  this.refresh();this.teleport(safeSidePosition(p.dungeon.position,room.id,roomEnvironment(room.id,p.ink,p.environment)));this.positionKey=this.savedKey();this.bridge.ready();
+  if(room.id==='betrayal'){this.corridorLayer=new CorridorLayer(this,{read:this.bridge.read,position:()=>this.position(),paused:this.bridge.paused,reduced:this.bridge.reduced,insert:this.bridge.corridor});this.subject.setVisible(false);this.subjectShadow.setVisible(false);this.strings.setVisible(false);}
+  else this.inkLayer=new StrikeLayer(this,room.id,{read:this.bridge.read,position:()=>this.position(),suspended:this.bridge.paused,commit:s=>this.bridge.edit(s,this.position()),preview:this.bridge.preview});
+  this.refresh();this.teleport(safeSidePosition(p.dungeon.position,room.id,roomEnvironment(room.id,p.ink,p.environment,p.corridor)));this.positionKey=this.savedKey();if(room.id==='betrayal')this.cameras.main.setScroll(Math.max(0,p.dungeon.position.x-490),0);this.bridge.ready();
  }
  private body(){return this.actor.body as Phaser.Physics.Arcade.Body;}
  private savedKey(){const d=this.bridge.read().dungeon;return `${d.roomId}:${d.position.x}:${d.position.y}`;}
  position():Point{return this.actor?{x:this.actor.x,y:this.actor.y}:this.bridge.read().dungeon.position;}
  private teleport(p:Point){this.body().reset(p.x,p.y);}
  cancelInk(){this.inkLayer?.cancelEdit();}
+ dropCorridor(x:number,y:number){return this.corridorLayer?.drop(x,y)??null;}
+ rejectWord(word:string){this.corridorLayer?.reject(word);}
+ removeCorridor(){this.corridorLayer?.remove();}
  beginInk(){this.inkLayer?.beginKeyboard();}resetInk(){this.inkLayer?.reset();}
  private view(){
   const p=this.bridge.read(),ink=this.inkLayer?.draft?{...p.ink,[this.roomId]:this.inkLayer.draft}:p.ink;
-  return {p,ink,realm:readRealm(this.roomId,ink[this.roomId as InkRoom],p.environment.identity),env:roomEnvironment(this.roomId,ink,p.environment)};
+  return {p,ink,realm:readRealm(this.roomId,ink[this.roomId as InkRoom],p.environment.identity),env:roomEnvironment(this.roomId,ink,p.environment,p.corridor)};
  }
  private refresh(){
-  const {p,realm,env}=this.view();this.envKey=JSON.stringify([env,realm.canceled,p.cue?.id]);
+  const {p,realm,env}=this.view();this.envKey=JSON.stringify([env,realm.canceled,p.cue?.id,p.corridor]);
   this.terrain.clear(true,true);this.terrainArt.removeAll(true);
   const addSurface=(r:{x:number;y:number;w:number;h:number},gate=false)=>{
    this.terrain.add(this.add.rectangle(r.x+r.w/2,r.y+r.h/2,r.w,r.h,0xffffff,0));
+   if(this.roomId==='betrayal'&&r.x===900&&r.w===340)return;
    const g=this.add.graphics();g.fillStyle(gate?0x693449:0xd6c39d,1);
    g.fillPoints([{x:r.x,y:r.y},{x:r.x+r.w,y:r.y},{x:r.x+r.w-5,y:r.y+r.h-5},{x:r.x+r.w*.7,y:r.y+r.h-14},{x:r.x+r.w*.4,y:r.y+r.h},{x:r.x+5,y:r.y+r.h-9}],true);
    g.lineStyle(3,gate?0xc9667a:0xf1ddaf);g.lineBetween(r.x,r.y+3,r.x+r.w,r.y+3);this.terrainArt.add(g);
@@ -78,10 +87,11 @@ export class SideScrollScene extends Phaser.Scene {
    addSurface(gate,true);this.terrainArt.add(this.add.text(gate.x+gate.w/2,gate.y+18,[...gate.label].join('\n'),{fontFamily:'Memory Serif, serif',fontSize:'26px',color:'#f2ddbc'}).setOrigin(.5,0));
   }
   const bridge=sideRoom(this.roomId).bridge;
-  if(bridge&&!realm.bridgeSolid){
+  if(this.roomId!=='betrayal'&&bridge&&!realm.bridgeSolid){
    const ghost=this.add.rectangle(bridge.x+bridge.w/2,bridge.y+25,bridge.w,22,0xccb997,realm.bridgePresent?.28:.07).setAngle(realm.bridgePresent?8:0);this.terrainArt.add(ghost);
    const seams=this.add.graphics();seams.lineStyle(2,0xc0a784,.5);seams.lineBetween(bridge.x,bridge.y-20,bridge.x+24,bridge.y+45);seams.lineBetween(bridge.x+bridge.w,bridge.y-20,bridge.x+bridge.w-24,bridge.y+45);this.terrainArt.add(seams);
   }
+  if(this.roomId==='betrayal'){this.shade.setAlpha(.6);return;}
   if(this.roomId==='chapel'){
    if(realm.lightOn){const light=this.add.graphics();light.fillStyle(0xeccc7a,.17);light.fillTriangle(740,90,580,620,1390,620);light.fillStyle(0xffdf8d,.9);light.fillCircle(740,95,17);this.terrainArt.add(light);}
    const frame=this.add.graphics();frame.lineStyle(5,realm.doorLocked?0xae5968:0xdcc28c,realm.doorPresent?1:.18);frame.strokeRect(1260,438,100,182);
@@ -116,9 +126,10 @@ export class SideScrollScene extends Phaser.Scene {
  update(time:number){
   if(!this.actor||this.folding)return;
   const p=this.bridge.read();if(p.dungeon.roomId!==this.roomId){this.bridge.nearby(null);this.scene.restart();return;}
-  const {env,realm}=this.view();if(this.envKey!==JSON.stringify([env,realm.canceled,p.cue?.id]))this.refresh();this.inkLayer.refresh();
+  this.corridorLayer?.update();
+  const {env,realm}=this.view();if(this.envKey!==JSON.stringify([env,realm.canceled,p.cue?.id,p.corridor]))this.refresh();this.inkLayer?.refresh();
   if(this.positionKey!==this.savedKey()){this.positionKey=this.savedKey();this.teleport(safeSidePosition(p.dungeon.position,this.roomId,env));}
-  const body=this.body(),paused=this.bridge.paused()||this.inkLayer.editing;
+  const body=this.body(),paused=this.bridge.paused()||(this.inkLayer?.editing??false)||!!this.corridorLayer?.busy;
   this.puppet.setPosition(this.actor.x,body.bottom).setFlipX(this.facing<0).setAngle(body.velocity.x&&!this.bridge.reduced()?this.facing*3:0);
   if(paused){this.physics.world.pause();body.setVelocity(0);this.wasPaused=true;return;}
   if(this.wasPaused){Object.values(this.keys).forEach(k=>k.reset());this.jumpQueued=0;this.wasPaused=false;}
@@ -127,7 +138,7 @@ export class SideScrollScene extends Phaser.Scene {
   body.setVelocityX(axis*config.speed);if(axis)this.facing=axis;
   if(body.blocked.down)this.lastGrounded=time;if(Phaser.Input.Keyboard.JustDown(this.keys.SPACE))this.jumpQueued=time;
   if(this.jumpQueued>0&&time-this.jumpQueued<120&&time-this.lastGrounded<100){body.setVelocityY(-config.jumpSpeed);this.jumpQueued=0;this.lastGrounded=-1000;}
-  if(this.actor.y>805){this.bridge.fall();const next=this.bridge.read();this.teleport(safeSidePosition(next.dungeon.position,this.roomId,roomEnvironment(this.roomId,next.ink,next.environment)));return;}
+  if(this.actor.y>805){this.bridge.fall();const next=this.bridge.read();this.teleport(safeSidePosition(next.dungeon.position,this.roomId,roomEnvironment(this.roomId,next.ink,next.environment,next.corridor)));return;}
   const nearby=this.objects().filter(o=>Math.hypot(o.x-this.actor.x,o.y-this.actor.y)<=dungeon.rules.interactionRadius).sort((a,b)=>Math.abs(a.x-this.actor.x)-Math.abs(b.x-this.actor.x))[0]??null;
   if((nearby?.id??'')!==this.nearId){this.nearId=nearby?.id??'';this.bridge.nearby(nearby);}
   if(nearby&&Phaser.Input.Keyboard.JustDown(this.keys.E))this.bridge.interact(nearby,this.position());

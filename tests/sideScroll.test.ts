@@ -9,11 +9,11 @@ import { initialEnvironment } from '../src/prologue/environment.ts';
 type Store=ReturnType<typeof createPrologueStore>;
 function setup(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);}};return{values,storage,s:createPrologueStore(storage)};}
 function advance(s:Store,id:string){for(let i=0;i<80&&s.getState().progress.nodeId!==id;i++)s.getState().advance(s.getState().progress.nodeId);assert.equal(s.getState().progress.nodeId,id);}
-function enter(s:Store){s.getState().start();advance(s,'rescue');s.getState().choose('rescue','yes');advance(s,'threat');s.getState().choose('threat','called');advance(s,'questions');for(const q of questions){s.getState().ask(q.id);s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();}
+function enter(s:Store){s.getState().start();advance(s,'rescue');s.getState().choose('rescue','yes');advance(s,'threat');s.getState().choose('threat','called');advance(s,'questions');for(const q of questions){s.getState().ask(q.id);s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();cue(s);}
 function touch(s:Store,id:string){const o=dungeon.rooms.find(r=>r.id===s.getState().progress.dungeon.roomId)!.objects.find(o=>o.id===id)!;return s.getState().touch(id,null,false,o);}
 function erase(s:Store,word:string){const id=s.getState().progress.dungeon.roomId;return s.getState().editStroke(id,strokeAcross(id,word),strikeRoom(id).anchor);}
 function cue(s:Store){for(let i=0;i<5&&s.getState().progress.cue;i++)s.getState().cueNext();}
-function chapel(s:Store){erase(s,'blocks');touch(s,'betrayal_memory');cue(s);touch(s,'to_chapel');assert.equal(s.getState().progress.dungeon.roomId,'chapel');}
+function chapel(s:Store){const room=dungeon.rooms[0];s.getState().editCorridor('bridge','companion',room.objects.find(o=>o.id==='trust_bridge')!);s.getState().editCorridor('door','betrayal',room.objects.find(o=>o.id==='betrayal_door')!);cue(s);touch(s,'to_chapel');cue(s);assert.equal(s.getState().progress.dungeon.roomId,'chapel');}
 function altar(s:Store){chapel(s);erase(s,'locks');touch(s,'altar_seal');cue(s);touch(s,'to_altar');assert.equal(s.getState().progress.dungeon.roomId,'altar');}
 
 test('ink coverage depends on both endpoints; a partial word and a vertical line do not cancel the verb',()=>{
@@ -40,18 +40,18 @@ test('a long stroke can suppress several words; valid alternatives alter the obs
  const self=readRealm('altar',strokeAcross('altar','a_self1'));assert.equal(self.selfPresent,false);assert.equal(self.mood,'faded');
  const free=readRealm('altar',strokeAcross('altar','binds'));assert.equal(free.bound,false);assert.equal(free.faithIntact,true);
 });
-test('preview is pure, commit copies geometry, reset reverses effects and unchanged drops do not write',()=>{
- const {s,storage}=setup();enter(s);const before=structuredClone(s.getState().progress);readRealm('betrayal',strokeAcross('betrayal','blocks'));assert.deepEqual(s.getState().progress,before);
- const stroke=strokeAcross('betrayal','blocks');s.getState().editStroke('betrayal',stroke,strikeRoom('betrayal').anchor);stroke.a.x=0;
- assert.equal(s.getState().progress.environment.wall,'crossed');const checkpoint=structuredClone(s.getState().progress);assert.equal(erase(s,'blocks'),inkUI.same);assert.deepEqual(s.getState().progress,checkpoint);
- const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);restored.getState().editStroke('betrayal',null,strikeRoom('betrayal').anchor);assert.equal(restored.getState().progress.environment.wall,'solid');
+test('chapel preview is pure, commit copies geometry, reset reverses effects and unchanged drops do not write',()=>{
+ const {s,storage}=setup();enter(s);chapel(s);const before=structuredClone(s.getState().progress);readRealm('chapel',strokeAcross('chapel','locks'));assert.deepEqual(s.getState().progress,before);
+ const stroke=strokeAcross('chapel','locks');s.getState().editStroke('chapel',stroke,strikeRoom('chapel').anchor);stroke.a.x=0;
+ assert.equal(s.getState().progress.environment.door,'open');const checkpoint=structuredClone(s.getState().progress);assert.equal(erase(s,'locks'),inkUI.same);assert.deepEqual(s.getState().progress,checkpoint);
+ const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);restored.getState().editStroke('chapel',null,strikeRoom('chapel').anchor);assert.equal(restored.getState().progress.environment.door,'closed');
 });
 test('remote, cross-room, nonfinite and narration-time edits never change persistent progress',()=>{
  const {s}=setup();enter(s);const before=structuredClone(s.getState().progress);
  s.getState().editStroke('chapel',strokeAcross('chapel','locks'),strikeRoom('betrayal').anchor);
  s.getState().editStroke('betrayal',strokeAcross('betrayal','blocks'),{x:2600,y:570});
  s.getState().editStroke('betrayal',{a:{x:NaN,y:200},b:{x:500,y:200}},strikeRoom('betrayal').anchor);assert.deepEqual(s.getState().progress,before);
- erase(s,'blocks');touch(s,'betrayal_memory');const cueState=structuredClone(s.getState().progress);erase(s,'memory');assert.deepEqual(s.getState().progress,cueState);
+ touch(s,'trust_bridge');const cueState=structuredClone(s.getState().progress);erase(s,'memory');assert.deepEqual(s.getState().progress,cueState);
 });
 test('removing the chapel bridge restores the nearest safe edge and can be undone from that edge',()=>{
  const {s}=setup();enter(s);chapel(s);
@@ -79,4 +79,26 @@ test('the two bridges share collision heights with their artwork; solved rooms h
  const ink=emptyInk();ink.betrayal=strokeAcross('betrayal','blocks');ink.chapel=strokeAcross('chapel','locks');const base={...projectInk(ink,initialEnvironment()),seal:'broken'};
  for(const room of sideRooms){const env=roomEnvironment(room.id,ink,base),ground=surfaces(room.id,env).filter(r=>r.y===physics.groundY).sort((a,b)=>a.x-b.x);let end=ground[0].x;for(const r of ground){assert.ok(r.x<=end,room.id);end=r.x+r.w;}assert.equal(closedGates(room.id,env).length,0);if(room.bridge)assert.ok(room.bridge.w>physics.speed*2*physics.jumpSpeed/physics.gravity+physics.bodyWidth);}
  for(const id of ['betrayal','chapel','altar'] as InkRoom[])assert.equal(validStroke(strikeRoom(id).park,id),true);
+});
+
+test('corridor sun costs exactly one life per confirmed attempt, survives reload and cannot be repeated during its cue',()=>{
+ const {s,storage}=setup();enter(s);const point=dungeon.rooms[0].objects.find(o=>o.id==='trust_bridge')!;
+ for(let life=2;life>=0;life--){s.getState().editCorridor('bridge','sun',point);assert.equal(s.getState().progress.dungeon.stability,life);assert.equal(s.getState().progress.corridor.bridgeWord,null);assert.equal(s.getState().progress.cue?.id,'corridor_sun');s.getState().editCorridor('bridge','sun',point);assert.equal(s.getState().progress.dungeon.stability,life);const copy=createPrologueStore(storage);assert.equal(copy.getState().error,null);assert.equal(copy.getState().progress.dungeon.stability,life);cue(s);}
+ s.getState().editCorridor('bridge','companion',point);assert.equal(s.getState().progress.corridor.bridgeWord,null);s.getState().retry();assert.equal(s.getState().progress.dungeon.stability,3);assert.equal(s.getState().progress.dungeon.position.x,dungeon.rooms[0].start.x);assert.ok(s.getState().progress.keywords.includes('betrayal'));
+});
+test('corridor wrong words, remote inputs and retired strikethrough do not mutate state; repeated valid edits consume no life',()=>{
+ const {s}=setup();enter(s);const point=dungeon.rooms[0].objects.find(o=>o.id==='trust_bridge')!,before=structuredClone(s.getState().progress);
+ s.getState().editCorridor('bridge','merit',point);s.getState().editCorridor('bridge','companion',{x:2450,y:570});s.getState().editStroke('betrayal',strokeAcross('betrayal','blocks'),point);assert.deepEqual(s.getState().progress,before);
+ for(let i=0;i<12;i++){s.getState().editCorridor('bridge','companion',point);s.getState().editCorridor('bridge',null,point);}assert.equal(s.getState().progress.dungeon.stability,3);assert.equal(s.getState().progress.corridor.bridgeWord,null);
+});
+test('the text door gates travel, is reversible and remains passable after recalling the bridge from the far side',()=>{
+ const {s}=setup();enter(s);const room=dungeon.rooms[0],point=room.objects.find(o=>o.id==='trust_bridge')!,door=room.objects.find(o=>o.id==='betrayal_door')!;
+ touch(s,'to_chapel');assert.equal(s.getState().progress.cue,null);s.getState().editCorridor('bridge','companion',point);s.getState().touch('trust_bridge',null,true,{x:1050,y:576});const x=s.getState().progress.dungeon.position.x;assert.ok(x<900||x>1240);
+ s.getState().editCorridor('door','betrayal',door);cue(s);s.getState().editCorridor('door',null,door);touch(s,'to_chapel');assert.equal(s.getState().progress.cue,null);
+ s.getState().editCorridor('door','betrayal',door);touch(s,'to_chapel');assert.equal(s.getState().progress.cue?.id,'corridor_exit');cue(s);assert.equal(s.getState().progress.dungeon.roomId,'chapel');
+});
+test('strike-3 save migration keeps solved rooms and archive saves separate; malformed corridor saves are preserved',()=>{
+ const {s,values,storage}=setup();enter(s);chapel(s);const old=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);old.contentVersion='first-act-strike-3';delete old.state.corridor;old.state.ink.betrayal=strokeAcross('betrayal','blocks');old.state.environment.bridge='open';old.state.environment.wall='crossed';values.set(PROLOGUE_SAVE_KEY,JSON.stringify(old));values.set('saibi.original.prologue.v1','archive');
+ const loaded=createPrologueStore(storage);assert.equal(loaded.getState().error,null);assert.deepEqual(loaded.getState().progress.corridor,{bridgeWord:'companion',doorWord:'betrayal'});assert.equal(loaded.getState().progress.dungeon.roomId,'chapel');assert.equal(values.get('saibi.original.prologue.v1'),'archive');
+ loaded.getState().retrySave();const broken=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);broken.state.corridor.bridgeWord='sun';values.set(PROLOGUE_SAVE_KEY,JSON.stringify(broken));const keep=values.get(PROLOGUE_SAVE_KEY);const rejected=createPrologueStore(storage);assert.ok(rejected.getState().error);rejected.getState().retrySave();assert.equal(values.get(PROLOGUE_SAVE_KEY),keep);
 });

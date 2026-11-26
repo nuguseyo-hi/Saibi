@@ -89,7 +89,7 @@
         "id": "betrayal",
         "name": "배신의 회랑",
         "subtitle": "I · 텍스트는 사물이다",
-        "objective": "문장을 지워 길을 열고, 다리를 지탱하는 기억은 남겨 두세요.",
+        "objective": "믿었던 동료로 길을 만들고, 배신이라는 말로 문을 완성하세요.",
         "palette": [
           "#352a30",
           "#a2393c",
@@ -98,12 +98,49 @@
         "width": 2800,
         "height": 960,
         "start": {
-          "x": 180,
+          "x": 700,
           "y": 570
         },
         "backgroundImage": "/assets/dungeon/corridor-collage.png",
         "obstacles": [],
         "objects": [
+          {
+            "id": "trust_bridge",
+            "kind": "inspect",
+            "x": 700,
+            "y": 570,
+            "title": "빈 기억에 단어 넣기",
+            "text": "나는 (　　　)를 믿었다."
+          },
+          {
+            "id": "betrayal_memory",
+            "kind": "inspect",
+            "x": 1540,
+            "y": 570,
+            "title": "등을 돌린 인형",
+            "text": "등을 돌린 동료들. 얼굴이 있어야 할 자리에 종이가 찢겨 있다."
+          },
+          {
+            "id": "betrayal_door",
+            "kind": "inspect",
+            "x": 2370,
+            "y": 570,
+            "title": "문장의 빈칸",
+            "text": "동료를 향한 나의 믿음은 ____으로 돌아왔다."
+          },
+          {
+            "id": "to_chapel",
+            "kind": "door",
+            "x": 2530,
+            "y": 570,
+            "title": "문 열기",
+            "text": "문의 빈 문장을 완성해야 합니다.",
+            "targetRoom": "chapel",
+            "spawn": {
+              "x": 180,
+              "y": 570
+            }
+          },
           {
             "id": "keyword_cache",
             "kind": "inspect",
@@ -127,35 +164,6 @@
             "y": 570,
             "title": "거부의 문장부호",
             "text": "외침은 길을 막는다. 물음표로 접으면 지나갈 수 있다."
-          },
-          {
-            "id": "trust_bridge",
-            "kind": "inspect",
-            "x": 1270,
-            "y": 570,
-            "title": "믿음의 다리",
-            "text": "나는 [　　　]를 믿었다."
-          },
-          {
-            "id": "betrayal_memory",
-            "kind": "inspect",
-            "x": 2040,
-            "y": 570,
-            "title": "등을 돌린 인형",
-            "text": "함께 싸웠는데. 믿었는데. 어째서?"
-          },
-          {
-            "id": "to_chapel",
-            "kind": "door",
-            "x": 2640,
-            "y": 570,
-            "title": "다음 장면",
-            "text": "다리를 건너고 기억을 확인하세요.",
-            "targetRoom": "chapel",
-            "spawn": {
-              "x": 180,
-              "y": 570
-            }
           }
         ],
         "enemies": [
@@ -605,6 +613,22 @@
       "아아, 신을 향하던 말이 끊겼군요. 저 아이가 버티고 있어요.",
       "하지만 이름이 지워진 자리는 오래 비어 있지 못한답니다.",
       "보세요. 새로운 믿음이 그 빈자리를 메우고 있어요."
+    ],
+    "corridor_intro": [
+      "자, 먼저 그의 심상을 관찰해볼까요? 군데군데 비어있는 것이, 아직 현실을 부정하고 있는 모양이죠.",
+      "마음껏 고쳐보세요, 관객 분. 이번 무대에서는 제가 손을 보태드릴 테니까요."
+    ],
+    "corridor_hint": [
+      "관객 분, 비어있는 곳에 단어를 채워넣어주세요!"
+    ],
+    "corridor_door": [
+      "그에게 차가운 현실을 일깨워 줍시다!"
+    ],
+    "corridor_sun": [
+      "이런, 이번 무대는 밤이란 말입니다. 아직 태양이 떠오르려면 멀었어요!"
+    ],
+    "corridor_exit": [
+      "동료를 믿을 수 없다면…… 이제 누구를 믿어야 할까요?"
     ]
   },
   "reverseMemory": "신은 나를 버리지 않았다.",

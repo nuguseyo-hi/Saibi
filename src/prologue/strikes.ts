@@ -1,4 +1,5 @@
 import raw from '../content/prologue/strikes.json' with { type: 'json' };
+import type { CorridorState } from './corridor.ts';
 import type { Point } from '../dungeon/model.ts';
 import type { EnvironmentState } from './environment.ts';
 import { record } from '../domain/validation.ts';
@@ -73,12 +74,12 @@ export function readRealm(id:string,ink:InkStroke|null,identity='sealed'):Realm 
  if(mood==='held'&&key!=='default')mood=key==='released'||key==='freed'?'released':'doubt';
  return {canceled,lightOn,bridgePresent,bridgeSolid,doorPresent,doorLocked,wallSolid,selfPresent,companionPresent,faithIntact,bound,reaction:room.reactions[key]??room.reactions.default,mood};
 }
-export function projectInk(ink:InkState,base:EnvironmentState):EnvironmentState {
+export function projectInk(ink:InkState,base:EnvironmentState,corridor?:CorridorState):EnvironmentState {
  const first=readRealm('betrayal',ink.betrayal),chapel=readRealm('chapel',ink.chapel);
- return {...base,wall:first.wallSolid?'solid':'crossed',punctuation:'question',bridge:first.bridgeSolid?'open':'folded',negation:'detached',door:chapel.doorLocked?'closed':'open'};
+ return {...base,wall:corridor?'crossed':first.wallSolid?'solid':'crossed',punctuation:'question',bridge:(corridor?!!corridor.bridgeWord:first.bridgeSolid)?'open':'folded',negation:'detached',door:chapel.doorLocked?'closed':'open'};
 }
-export function roomEnvironment(id:string,ink:InkState,base:EnvironmentState):EnvironmentState {
- const env=projectInk(ink,base);
+export function roomEnvironment(id:string,ink:InkState,base:EnvironmentState,corridor?:CorridorState):EnvironmentState {
+ const env=projectInk(ink,base,corridor);
  return id==='chapel'?{...env,bridge:readRealm(id,ink.chapel).bridgeSolid?'open':'folded'}:env;
 }
 export function canReachInk(id:string,p:Point):boolean {const room=strikeRoom(id);return !!room&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Math.hypot(p.x-room.anchor.x,p.y-room.anchor.y)<=room.reach;}

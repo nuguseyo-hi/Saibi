@@ -11,14 +11,13 @@ import { validPosition } from '../src/dungeon/model.ts';
 type Store=ReturnType<typeof createPrologueStore>;
 function setup(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);}};return{values,storage,store:createPrologueStore(storage)};}
 function advanceTo(s:Store,id:string){for(let i=0;i<70&&s.getState().progress.nodeId!==id;i++){const p=s.getState().progress;s.getState().advance(p.nodeId);}assert.equal(s.getState().progress.nodeId,id);}
-function startDungeon(s:Store,rescue='no',answer='called',collect=true){s.getState().start();advanceTo(s,'rescue');s.getState().choose('rescue',rescue);if(rescue==='no')assert.equal(s.getState().progress.nodeId,'forced_yes');advanceTo(s,'threat');assert.equal(s.getState().progress.guard,90);s.getState().choose('threat',answer);assert.equal(s.getState().progress.guard,100);advanceTo(s,'obedience');assert.equal(s.getState().progress.guard,0);advanceTo(s,'questions');for(const q of questions){s.getState().ask(q.id);if(collect)for(const part of meta[q.nodeId].segments??[])if(part.keywordId){s.getState().collect(part.keywordId);s.getState().collect(part.keywordId);}s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();assert.equal(s.getState().progress.phase,'dungeon');}
+function startDungeon(s:Store,rescue='no',answer='called',collect=true){s.getState().start();advanceTo(s,'rescue');s.getState().choose('rescue',rescue);if(rescue==='no')assert.equal(s.getState().progress.nodeId,'forced_yes');advanceTo(s,'threat');assert.equal(s.getState().progress.guard,90);s.getState().choose('threat',answer);assert.equal(s.getState().progress.guard,100);advanceTo(s,'obedience');assert.equal(s.getState().progress.guard,0);advanceTo(s,'questions');for(const q of questions){s.getState().ask(q.id);if(collect)for(const part of meta[q.nodeId].segments??[])if(part.keywordId){s.getState().collect(part.keywordId);s.getState().collect(part.keywordId);}s.getState().advance(q.nodeId);}s.getState().finishQuestions();s.getState().enter();assert.equal(s.getState().progress.phase,'dungeon');finishCue(s);}
 function object(s:Store,id:string){return stageObject(dungeon.rooms.find(r=>r.id===s.getState().progress.dungeon.roomId)!.objects.find(o=>o.id===id)!,s.getState().progress.environment);}
-function inspect(s:Store,id:string){assert.equal(s.getState().inspect(id,object(s,id)),true);}
 function travel(s:Store,id:string){s.getState().travel(id,object(s,id));}
 function finishCue(s:Store){for(let i=0;i<4&&s.getState().progress.cue;i++)s.getState().cueNext();}
 function erase(s:Store,word:string){const id=s.getState().progress.dungeon.roomId;s.getState().editStroke(id,strokeAcross(id,word),strikeRoom(id).anchor);}
 function reachCore(s:Store){
- erase(s,'blocks');travel(s,'to_chapel');assert.equal(s.getState().progress.dungeon.roomId,'betrayal');inspect(s,'betrayal_memory');finishCue(s);travel(s,'to_chapel');
+ s.getState().editCorridor('bridge','companion',object(s,'trust_bridge'));travel(s,'to_chapel');assert.equal(s.getState().progress.dungeon.roomId,'betrayal');s.getState().editCorridor('door','betrayal',object(s,'betrayal_door'));finishCue(s);travel(s,'to_chapel');finishCue(s);
  erase(s,'locks');const seal=object(s,'altar_seal');s.getState().touch(seal.id,null,false,seal);finishCue(s);travel(s,'to_altar');
  erase(s,'sun');assert.equal(s.getState().progress.resistance,1);assert.equal(s.getState().progress.environment.identity,'resisting');finishCue(s);assert.equal(s.getState().progress.phase,'core');
 }
@@ -32,9 +31,8 @@ for(const rescue of ['yes','no'])for(const answer of ['curiosity','called'])test
  s.getState().visit('church');s.getState().church();assert.equal(s.getState().progress.phase,'church');s.getState().village();
  assert.deepEqual(createPrologueStore(storage).getState().progress,s.getState().progress);assert.equal(decodePrologue(values.get(PROLOGUE_SAVE_KEY)!).name,'세라');assert.ok(before.ink.altar);
 });
-test('questions stay mandatory and keyword collection is optional for direct ink editing',()=>{
- const {store:s}=setup();s.getState().start();s.getState().finishQuestions();assert.equal(s.getState().progress.nodeId,'myth_0');startDungeon(s,'no','called',false);assert.equal(s.getState().progress.keywords.length,0);
- inspect(s,'keyword_cache');assert.equal(s.getState().progress.keywords.length,0);reachCore(s);
+test('questions stay mandatory and dialogue awards the keywords needed for the corridor',()=>{
+ const {store:s}=setup();s.getState().start();s.getState().finishQuestions();assert.equal(s.getState().progress.nodeId,'myth_0');startDungeon(s,'no','called',false);assert.equal(s.getState().progress.keywords.length,5);reachCore(s);
 });
 test('shared text physics: bold blocks, crossed text passes, underline unfolds; cancelled preview leaves world unchanged',()=>{
  const original=initialEnvironment(),wall=texts.find(t=>t.id==='absolute_wall')!,bridge=texts.find(t=>t.id==='trust_path')!;
@@ -43,10 +41,10 @@ test('shared text physics: bold blocks, crossed text passes, underline unfolds; 
  const unfolded=applyRule(original,rules.find(r=>r.id==='bridge_rule')!,'companion',['companion']);assert.equal(textPhysics(bridge,unfolded).solid,false);assert.equal(textPhysics(bridge,unfolded).unfolded,true);
  assert.equal(exitAvailable('to_altar',original),false);assert.throws(()=>applyRule(original,rules[0],'script',[]));
 });
-test('ink positions persist, repeat drops are idempotent, and reset restores the world',()=>{
- const {store:s,storage}=setup();startDungeon(s);erase(s,'blocks');const checkpoint=structuredClone(s.getState().progress);erase(s,'blocks');assert.deepEqual(s.getState().progress,checkpoint);
- const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);assert.deepEqual(restored.getState().progress.ink.betrayal,checkpoint.ink.betrayal);
- restored.getState().editStroke('betrayal',null,strikeRoom('betrayal').anchor);assert.equal(restored.getState().progress.environment.wall,'solid');assert.equal(restored.getState().progress.environment.bridge,'open');
+test('corridor insertion persists, repeat insertion is idempotent, and removing the word folds the bridge',()=>{
+ const {store:s,storage}=setup();startDungeon(s);const point=object(s,'trust_bridge');s.getState().editCorridor('bridge','companion',point);const checkpoint=structuredClone(s.getState().progress);s.getState().editCorridor('bridge','companion',point);assert.deepEqual(s.getState().progress,checkpoint);
+ const restored=createPrologueStore(storage);assert.equal(restored.getState().error,null);assert.deepEqual(restored.getState().progress.corridor,checkpoint.corridor);
+ restored.getState().editCorridor('bridge',null,point);assert.equal(restored.getState().progress.environment.wall,'crossed');assert.equal(restored.getState().progress.environment.bridge,'folded');
 });
 test('forced events survive reload and stale inputs do not skip mandatory phases',()=>{
  const {store:s,storage}=setup();s.getState().start();advanceTo(s,'rescue');s.getState().choose('rescue','no');const copy=createPrologueStore(storage);assert.equal(copy.getState().progress.nodeId,'forced_yes');copy.getState().choose('rescue','yes');assert.equal(copy.getState().progress.nodeId,'forced_yes');
@@ -54,7 +52,7 @@ test('forced events survive reload and stale inputs do not skip mandatory phases
  advanceTo(copy,'questions');copy.getState().advance('questions');copy.getState().enter();assert.equal(copy.getState().progress.nodeId,'questions');
 });
 test('stability immunity, zero-state retry preserves progress and core draft is not saved',()=>{
- const {store:s,storage}=setup();startDungeon(s);erase(s,'blocks');s.getState().hit('betrayal_chaser',{x:650,y:480},10000);s.getState().hit('betrayal_chaser',{x:650,y:480},10500);assert.equal(s.getState().progress.dungeon.stability,2);
+ const {store:s,storage}=setup();startDungeon(s);s.getState().editCorridor('bridge','companion',object(s,'trust_bridge'));s.getState().hit('betrayal_chaser',{x:650,y:480},10000);s.getState().hit('betrayal_chaser',{x:650,y:480},10500);assert.equal(s.getState().progress.dungeon.stability,2);
  s.getState().hit('betrayal_chaser',{x:650,y:480},11000);s.getState().hit('betrayal_chaser',{x:650,y:480},12000);assert.equal(s.getState().progress.dungeon.stability,0);assert.equal(createPrologueStore(storage).getState().error,null);
  s.getState().retry();assert.equal(s.getState().progress.dungeon.stability,3);assert.equal(s.getState().progress.environment.bridge,'open');reachCore(s);const r=createPrologueStore(storage);assert.equal(r.getState().progress.phase,'core');assert.equal(r.getState().progress.editResult,null);
 });
