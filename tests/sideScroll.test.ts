@@ -14,7 +14,7 @@ function touch(s:Store,id:string){const o=dungeon.rooms.find(r=>r.id===s.getStat
 function erase(s:Store,word:string){const id=s.getState().progress.dungeon.roomId;return s.getState().editStroke(id,strokeAcross(id,word),strikeRoom(id).anchor);}
 function cue(s:Store){for(let i=0;i<5&&s.getState().progress.cue;i++)s.getState().cueNext();}
 function chapel(s:Store){const room=dungeon.rooms[0];s.getState().editCorridor('bridge','companion',room.objects.find(o=>o.id==='trust_bridge')!);s.getState().editCorridor('door','betrayal',room.objects.find(o=>o.id==='betrayal_door')!);cue(s);touch(s,'to_chapel');cue(s);assert.equal(s.getState().progress.dungeon.roomId,'chapel');}
-function altar(s:Store){chapel(s);erase(s,'locks');touch(s,'altar_seal');cue(s);touch(s,'to_altar');assert.equal(s.getState().progress.dungeon.roomId,'altar');}
+function altar(s:Store){chapel(s);erase(s,'c_light1');cue(s);touch(s,'chapel_memory');touch(s,'chapel_slot');cue(s);touch(s,'to_altar');cue(s);assert.equal(s.getState().progress.dungeon.roomId,'altar');}
 
 test('ink coverage depends on both endpoints; a partial word and a vertical line do not cancel the verb',()=>{
  const word=strikeRoom('chapel').words.find(w=>w.id==='locks')!,full=strokeAcross('chapel','locks');
@@ -30,7 +30,7 @@ test('the same light entity drives both rules; erasing the locking action preser
  const action=readRealm('chapel',strokeAcross('chapel','locks'));
  assert.equal(action.lightOn,true);assert.equal(action.bridgeSolid,true);assert.equal(action.doorLocked,false);assert.equal(action.doorPresent,true);
  assert.notEqual(dark.reaction,action.reaction);
- const ghost=readRealm('chapel',strokeAcross('chapel','c_door'));assert.equal(ghost.doorPresent,false);assert.equal(ghost.bridgeSolid,true);
+ const permitted=readRealm('chapel',strokeAcross('chapel','c_lie'));assert.equal(permitted.doorLocked,false);assert.equal(permitted.lightOn,true);
  const unsupported=readRealm('chapel',strokeAcross('chapel','c_support'));assert.equal(unsupported.bridgePresent,true);assert.equal(unsupported.bridgeSolid,false);assert.equal(unsupported.lightOn,true);
 });
 test('a long stroke can suppress several words; valid alternatives alter the observer and subject differently',()=>{
@@ -55,8 +55,8 @@ test('remote, cross-room, nonfinite and narration-time edits never change persis
 });
 test('removing the chapel bridge restores the nearest safe edge and can be undone from that edge',()=>{
  const {s}=setup();enter(s);chapel(s);
- const result=s.getState().editStroke('chapel',strokeAcross('chapel','c_light1'),{x:1080,y:576});assert.equal(result,inkUI.safe);
- const x=s.getState().progress.dungeon.position.x;assert.ok(x>=900&&x<=1240);assert.ok(x<950||x>1210);assert.equal(s.getState().progress.environment.door,'open');
+ const result=s.getState().editStroke('chapel',strokeAcross('chapel','c_light1'),{x:1140,y:576});assert.equal(result,inkUI.safe);
+ const x=s.getState().progress.dungeon.position.x;assert.ok(x>=960&&x<=1310);assert.ok(surfaces('chapel',roomEnvironment('chapel',s.getState().progress.ink,s.getState().progress.environment,s.getState().progress.corridor,s.getState().progress.chapel)).some(r=>x>=r.x&&x<=r.x+r.w));cue(s);assert.equal(s.getState().progress.environment.door,'open');
  s.getState().editStroke('chapel',null,s.getState().progress.dungeon.position);assert.equal(readRealm('chapel',s.getState().progress.ink.chapel).bridgeSolid,true);
 });
 test('faith and self erasure, rather than a selected word, control resistance and the single final commitment',()=>{
@@ -101,4 +101,47 @@ test('strike-3 save migration keeps solved rooms and archive saves separate; mal
  const {s,values,storage}=setup();enter(s);chapel(s);const old=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);old.contentVersion='first-act-strike-3';delete old.state.corridor;old.state.ink.betrayal=strokeAcross('betrayal','blocks');old.state.environment.bridge='open';old.state.environment.wall='crossed';values.set(PROLOGUE_SAVE_KEY,JSON.stringify(old));values.set('saibi.original.prologue.v1','archive');
  const loaded=createPrologueStore(storage);assert.equal(loaded.getState().error,null);assert.deepEqual(loaded.getState().progress.corridor,{bridgeWord:'companion',doorWord:'betrayal'});assert.equal(loaded.getState().progress.dungeon.roomId,'chapel');assert.equal(values.get('saibi.original.prologue.v1'),'archive');
  loaded.getState().retrySave();const broken=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);broken.state.corridor.bridgeWord='sun';values.set(PROLOGUE_SAVE_KEY,JSON.stringify(broken));const keep=values.get(PROLOGUE_SAVE_KEY);const rejected=createPrologueStore(storage);assert.ok(rejected.getState().error);rejected.getState().retrySave();assert.equal(values.get(PROLOGUE_SAVE_KEY),keep);
+});
+
+test('chapel requires darkness, collection and insertion; collected word survives restore and the new stairs gate exit',()=>{
+ const {s,storage}=setup();enter(s);chapel(s);
+ touch(s,'chapel_memory');touch(s,'chapel_slot');touch(s,'to_altar');assert.deepEqual(s.getState().progress.chapel,{collected:false,inserted:false});assert.equal(s.getState().progress.cue,null);
+ erase(s,'c_light2');assert.equal(s.getState().progress.cue?.id,'chapel_dark');cue(s);
+ touch(s,'chapel_slot');assert.equal(s.getState().progress.chapel.inserted,false);
+ touch(s,'chapel_memory');const collected=structuredClone(s.getState().progress);touch(s,'chapel_memory');assert.deepEqual(s.getState().progress,collected);
+ s.getState().editStroke('chapel',null,strikeRoom('chapel').anchor);assert.equal(s.getState().progress.chapel.collected,true);assert.equal(s.getState().progress.environment.chapelPath,'light');touch(s,'chapel_slot');assert.equal(s.getState().progress.chapel.inserted,false);
+ erase(s,'c_light1');cue(s);touch(s,'chapel_slot');cue(s);assert.equal(s.getState().progress.environment.chapelPath,'stairs');
+ const copy=createPrologueStore(storage);assert.equal(copy.getState().error,null);assert.deepEqual(copy.getState().progress.chapel,{collected:true,inserted:true});
+ const point=dungeon.rooms[1].objects.find(o=>o.id==='chapel_slot')!;copy.getState().touch(point.id,null,true,point);assert.equal(copy.getState().progress.environment.chapelPath,'broken');touch(copy,'to_altar');assert.equal(copy.getState().progress.cue,null);
+ touch(copy,'chapel_slot');cue(copy);touch(copy,'to_altar');assert.equal(copy.getState().progress.cue?.id,'chapel_exit');cue(copy);assert.equal(copy.getState().progress.dungeon.roomId,'altar');
+});
+test('sun intervention resets both endpoints exactly, survives reload and preserves collected or inserted darkness',()=>{
+ for(const inserted of [false,true]){const {s,storage}=setup();enter(s);chapel(s);erase(s,'c_light1');cue(s);touch(s,'chapel_memory');if(inserted){touch(s,'chapel_slot');cue(s);}
+ erase(s,'c_sun');assert.equal(s.getState().progress.cue?.id,'chapel_sun');const before=structuredClone(s.getState().progress);erase(s,'c_light1');touch(s,'chapel_slot');assert.deepEqual(s.getState().progress,before);
+ const copy=createPrologueStore(storage);assert.equal(copy.getState().error,null);cue(copy);assert.deepEqual(copy.getState().progress.ink.chapel,strikeRoom('chapel').park);assert.deepEqual(copy.getState().progress.chapel,{collected:true,inserted});assert.equal(copy.getState().progress.environment.chapelPath,inserted?'stairs':'light');
+ }
+});
+test('chapel rejects corrupt ownership and mismatched world state without overwriting saves',()=>{
+ const {s,values,storage}=setup();enter(s);chapel(s);const base=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);
+ for(const mutate of [(v:typeof base)=>v.state.chapel={collected:false,inserted:true},(v:typeof base)=>v.state.environment.chapelPath='stairs']){const bad=structuredClone(base);mutate(bad);const raw=JSON.stringify(bad);values.set(PROLOGUE_SAVE_KEY,raw);const copy=createPrologueStore(storage);assert.ok(copy.getState().error);copy.getState().retrySave();assert.equal(values.get(PROLOGUE_SAVE_KEY),raw);}
+});
+test('chapel memory platforms are reachable in darkness in both directions; stairs reach the elevated exit',()=>{
+ const ink={...emptyInk(),chapel:strokeAcross('chapel','c_light1')};
+ const env=roomEnvironment('chapel',ink,initialEnvironment(),undefined,{collected:false,inserted:false});
+ const books=surfaces('chapel',env).filter(r=>r.x<1620).sort((a,b)=>a.x-b.x);
+ assert.equal(books.length,4);assert.equal(closedGates('chapel',env).length,0);
+ function canJump(a:typeof books[number],b:typeof books[number]){const rise=a.y-b.y,disc=physics.jumpSpeed**2-2*physics.gravity*rise;assert.ok(disc>=0,'rise fits jump');const travel=physics.speed*(physics.jumpSpeed+Math.sqrt(disc))/physics.gravity;const gap=Math.max(0,b.x-(a.x+a.w),a.x-(b.x+b.w));assert.ok(gap+physics.bodyWidth+8<travel,'landing has body clearance');}
+ for(let i=1;i<books.length;i++){canJump(books[i-1],books[i]);canJump(books[i],books[i-1]);}
+ const solved=roomEnvironment('chapel',ink,initialEnvironment(),undefined,{collected:true,inserted:true}),path=surfaces('chapel',solved).sort((a,b)=>a.x-b.x);
+ for(let i=1;i<path.length;i++)canJump(path[i-1],path[i]);
+ assert.equal(path.at(-1)!.y,220);assert.ok(!surfaces('chapel',env).some(r=>r.x===1620));
+});
+test('corridor-4 migration preserves story and corridor while restarting only the changed chapel puzzle',()=>{
+ const {s,values}=setup();enter(s);chapel(s);const old=JSON.parse(values.get(PROLOGUE_SAVE_KEY)!);old.contentVersion='first-act-corridor-4';delete old.state.chapel;delete old.state.environment.chapelPath;
+ const restored=decodePrologue(JSON.stringify(old));assert.deepEqual(restored.chapel,{collected:false,inserted:false});assert.deepEqual(restored.corridor,s.getState().progress.corridor);assert.deepEqual(restored.keywords,s.getState().progress.keywords);assert.equal(restored.nodeId,old.state.nodeId);assert.deepEqual(restored.dungeon.position,{x:180,y:576});
+});
+
+test('erasing the path as well as light cannot unlock exit until the path sentence works again',()=>{
+ const {s}=setup();enter(s);chapel(s);s.getState().editStroke('chapel',{a:{x:410,y:240},b:{x:1040,y:240}},strikeRoom('chapel').anchor);cue(s);touch(s,'chapel_memory');touch(s,'chapel_slot');assert.equal(s.getState().progress.chapel.inserted,true);assert.equal(s.getState().progress.environment.chapelPath,'broken');assert.equal(s.getState().progress.cue,null);touch(s,'to_altar');assert.equal(s.getState().progress.cue,null);
+ s.getState().editStroke('chapel',strikeRoom('chapel').park,strikeRoom('chapel').anchor);assert.equal(s.getState().progress.environment.chapelPath,'stairs');assert.equal(s.getState().progress.cue?.id,'chapel_stairs');
 });

@@ -1,3 +1,4 @@
+import { chapel } from './chapel.ts';
 import raw from '../content/prologue/sideScroll.json' with { type: 'json' };
 import { dungeon, rules, STATE_VALUES } from './content.ts';
 import type { StateKey } from './content.ts';
@@ -42,7 +43,7 @@ export function editMessage(slot:DirectSlot,optionId:string):string {
  const action=optionId===slot.remove?'remove':'insert';
  return feedback[slot.objectId]?.[action]??(action==='remove'?messages.removed:messages.inserted);
 }
-export function surfaces(id:string,e:EnvironmentState):Rect[]{const r=sideRoom(id);return [...r.platforms,...(r.bridge&&e.bridge==='open'?[r.bridge]:[])];}
+export function surfaces(id:string,e:EnvironmentState):Rect[]{const r=sideRoom(id);return [...r.platforms,...(id==='chapel'&&e.chapelPath==='stairs'?chapel.stairs:[]),...(r.bridge&&e.bridge==='open'&&(id!=='chapel'||e.chapelPath==='light')?[r.bridge]:[])];}
 export function closedGates(id:string,e:EnvironmentState){return sideRoom(id).gates.filter(g=>e[g.key]!==g.open);}
 export function slotInserted(slot:DirectSlot,e:EnvironmentState){const rule=rules.find(r=>r.id===slot.ruleId)!;return e[rule.stateKey]===rule.options.find(o=>o.id===slot.insert)!.value;}
 export function slotOption(slot:DirectSlot,e:EnvironmentState,word:string|null,remove:boolean){

@@ -127,12 +127,12 @@
         "x": 740,
         "y": 570
       },
-      "reach": 660,
+      "reach": 850,
       "bounds": {
-        "x": 360,
+        "x": 350,
         "y": 145,
-        "w": 1000,
-        "h": 260
+        "w": 1050,
+        "h": 320
       },
       "park": {
         "a": {
@@ -144,43 +144,13 @@
           "y": 182
         }
       },
-      "title": "빛의 두 가지 역할",
+      "title": "응답 없는 기도",
       "words": [
         {
           "id": "c_light1",
           "text": "빛",
           "x": 420,
-          "y": 254,
-          "w": 42,
-          "h": 44,
-          "entity": "light",
-          "action": null
-        },
-        {
-          "id": "c_door",
-          "text": "문",
-          "x": 610,
-          "y": 254,
-          "w": 42,
-          "h": 44,
-          "entity": "door",
-          "action": null
-        },
-        {
-          "id": "locks",
-          "text": "잠근다",
-          "x": 790,
-          "y": 254,
-          "w": 102,
-          "h": 44,
-          "entity": null,
-          "action": "locks"
-        },
-        {
-          "id": "c_light2",
-          "text": "빛",
-          "x": 420,
-          "y": 334,
+          "y": 240,
           "w": 42,
           "h": 44,
           "entity": "light",
@@ -188,45 +158,130 @@
         },
         {
           "id": "c_bridge",
-          "text": "다리",
-          "x": 610,
-          "y": 334,
-          "w": 72,
+          "text": "길",
+          "x": 780,
+          "y": 240,
+          "w": 42,
           "h": 44,
           "entity": "bridge",
           "action": null
         },
         {
           "id": "c_support",
-          "text": "지탱한다",
-          "x": 790,
-          "y": 334,
-          "w": 132,
+          "text": "있으리",
+          "x": 920,
+          "y": 240,
+          "w": 110,
           "h": 44,
           "entity": null,
           "action": "supports"
+        },
+        {
+          "id": "c_sun",
+          "text": "태양",
+          "x": 420,
+          "y": 325,
+          "w": 76,
+          "h": 44,
+          "entity": "sun",
+          "action": null
+        },
+        {
+          "id": "c_light2",
+          "text": "빛",
+          "x": 550,
+          "y": 325,
+          "w": 42,
+          "h": 44,
+          "entity": "light",
+          "action": null
+        },
+        {
+          "id": "c_lie",
+          "text": "거짓",
+          "x": 800,
+          "y": 325,
+          "w": 76,
+          "h": 44,
+          "entity": "lie",
+          "action": null
+        },
+        {
+          "id": "locks",
+          "text": "허락치 않으리",
+          "x": 960,
+          "y": 325,
+          "w": 225,
+          "h": 44,
+          "entity": null,
+          "action": "locks"
+        },
+        {
+          "id": "c_mighty",
+          "text": "전능하신",
+          "x": 420,
+          "y": 410,
+          "w": 150,
+          "h": 44,
+          "entity": "power",
+          "action": null
+        },
+        {
+          "id": "c_pray",
+          "text": "기도하라",
+          "x": 810,
+          "y": 410,
+          "w": 150,
+          "h": 44,
+          "entity": null,
+          "action": "prays"
         }
       ],
       "connectors": [
         {
-          "text": "은",
+          "text": "이 있는 곳에",
           "x": 475,
-          "y": 254
+          "y": 240
+        },
+        {
+          "text": "이",
+          "x": 842,
+          "y": 240
+        },
+        {
+          "text": ".",
+          "x": 1040,
+          "y": 240
+        },
+        {
+          "text": "의",
+          "x": 503,
+          "y": 325
+        },
+        {
+          "text": "은 결코",
+          "x": 610,
+          "y": 325
         },
         {
           "text": "을",
-          "x": 665,
-          "y": 254
+          "x": 890,
+          "y": 325
         },
         {
-          "text": "은",
-          "x": 475,
-          "y": 334
+          "text": ".",
+          "x": 1195,
+          "y": 325
         },
         {
-          "text": "를",
-          "x": 695,
-          "y": 334
+          "text": "그분께",
+          "x": 610,
+          "y": 410
+        },
+        {
+          "text": ".",
+          "x": 975,
+          "y": 410
         }
       ],
       "reactions": {

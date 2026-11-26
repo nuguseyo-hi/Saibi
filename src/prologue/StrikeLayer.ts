@@ -35,7 +35,7 @@ export class StrikeLayer {
   this.refresh();
  }
  current():InkStroke{return this.draft??this.bridge.read().ink[this.roomId as InkRoom]??strikeRoom(this.roomId).park;}
- realm():Realm {const p=this.bridge.read();return readRealm(this.roomId,this.draft??p.ink[this.roomId as InkRoom],p.environment.identity);}
+ realm():Realm {const p=this.bridge.read();return readRealm(this.roomId,this.draft??p.ink[this.roomId as InkRoom],p.environment.identity,p.chapel);}
  private allowed(){return !this.bridge.suspended()&&!this.bridge.read().cue&&canReachInk(this.roomId,this.bridge.position());}
  private point(pointer:Phaser.Input.Pointer):Point{return pointer.positionToCamera(this.scene.cameras.main) as Phaser.Math.Vector2;}
  private down=(pointer:Phaser.Input.Pointer)=>{
@@ -65,6 +65,7 @@ export class StrikeLayer {
  beginKeyboard(){if(!this.allowed())return;this.keyboard=true;this.handle='body';this.draft=structuredClone(this.current());this.paintPreview();}
  reset(){if(!this.allowed())return;this.cancel();this.bridge.commit(null);this.refresh();}
  private key=(event:KeyboardEvent)=>{
+  if(this.roomId==='chapel'&&this.bridge.read().chapel.inserted&&!this.editing&&event.key.toLowerCase()==='r')return;
   if(event.key.toLowerCase()==='q'&&!event.repeat){if(!this.allowed())return;event.preventDefault();event.stopImmediatePropagation();if(this.keyboard)this.cancel();else this.beginKeyboard();return;}
   if(!this.keyboard){if(event.key.toLowerCase()==='r'&&this.allowed()){event.preventDefault();event.stopImmediatePropagation();this.reset();}return;}
   if(!this.allowed()){this.cancel();return;}
@@ -78,13 +79,15 @@ export class StrikeLayer {
  };
  private paintPreview(){this.bridge.preview(this.realm());this.refresh(true);}
  refresh(force=false){
-  const p=this.bridge.read(),stroke=this.current(),key=JSON.stringify([stroke,this.editing,this.handle,p.ink[this.roomId as InkRoom]]);if(!force&&key===this.stamp)return;this.stamp=key;
+  const p=this.bridge.read(),stroke=this.current(),key=JSON.stringify([stroke,this.editing,this.handle,p.ink[this.roomId as InkRoom],p.chapel]);if(!force&&key===this.stamp)return;this.stamp=key;
   const room=strikeRoom(this.roomId),active=this.draft??p.ink[this.roomId as InkRoom],direct=room.words.filter(w=>wordCoverage(w,active)==='full');
   this.art.clear();
   for(const word of room.words){
    const coverage=wordCoverage(word,active),linked=!!word.entity&&direct.some(w=>w.entity===word.entity),erased=coverage==='full'||linked;
-   this.labels.get(word.id)!.setAlpha(erased?.35:1).setColor(coverage==='partial'?'#9b6424':'#392631');
-   if(linked&&coverage!=='full'){this.art.lineStyle(3,0xa34762,.65);this.art.lineBetween(word.x,word.y,word.x+word.w,word.y);}
+   const replacement=this.roomId==='chapel'&&word.id==='c_light1'&&p.chapel.inserted;
+   this.labels.get(word.id)!.setDepth(replacement?36:5).setBackgroundColor(replacement?'#e9d9b7':'');
+   this.labels.get(word.id)!.setText(this.roomId==='chapel'&&word.id==='c_light1'&&p.chapel.inserted?'어둠':word.text).setAlpha(this.roomId==='chapel'&&word.id==='c_light1'&&p.chapel.inserted?1:erased?.35:1).setColor(coverage==='partial'?'#9b6424':'#392631');
+   if((linked||this.roomId==='chapel'&&word.entity==='light'&&p.chapel.inserted)&&coverage!=='full'&&!(this.roomId==='chapel'&&word.id==='c_light1'&&p.chapel.inserted)){this.art.lineStyle(3,0xa34762,.65);this.art.lineBetween(word.x,word.y,word.x+word.w,word.y);}
    if(coverage==='partial'){this.art.lineStyle(2,0xe0b95f,.9);this.art.lineBetween(word.x,word.y+27,word.x+word.w,word.y+27);}
   }
   this.art.lineStyle(this.editing?14:11,0xa42f53,.95);this.art.lineBetween(stroke.a.x,stroke.a.y,stroke.b.x,stroke.b.y);

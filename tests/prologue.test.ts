@@ -18,7 +18,7 @@ function finishCue(s:Store){for(let i=0;i<4&&s.getState().progress.cue;i++)s.get
 function erase(s:Store,word:string){const id=s.getState().progress.dungeon.roomId;s.getState().editStroke(id,strokeAcross(id,word),strikeRoom(id).anchor);}
 function reachCore(s:Store){
  s.getState().editCorridor('bridge','companion',object(s,'trust_bridge'));travel(s,'to_chapel');assert.equal(s.getState().progress.dungeon.roomId,'betrayal');s.getState().editCorridor('door','betrayal',object(s,'betrayal_door'));finishCue(s);travel(s,'to_chapel');finishCue(s);
- erase(s,'locks');const seal=object(s,'altar_seal');s.getState().touch(seal.id,null,false,seal);finishCue(s);travel(s,'to_altar');
+ erase(s,'c_light1');finishCue(s);for(const id of ['chapel_memory','chapel_slot'])s.getState().touch(id,null,false,object(s,id));finishCue(s);travel(s,'to_altar');finishCue(s);
  erase(s,'sun');assert.equal(s.getState().progress.resistance,1);assert.equal(s.getState().progress.environment.identity,'resisting');finishCue(s);assert.equal(s.getState().progress.phase,'core');
 }
 for(const rescue of ['yes','no'])for(const answer of ['curiosity','called'])test(`complete prologue ${rescue}/${answer}: keywords → 3 zones → identity → name → playable character → village`,()=>{

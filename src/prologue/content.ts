@@ -7,8 +7,8 @@ import { record, safeId } from '../domain/validation.ts';
 export type SceneName='theatre'|'ruins'|'village';
 export type Mode='dialogue'|'rewrite'|'questions'|'infiltrate'|'name'|'transfer'|'village';
 export interface NodeMeta { scene:SceneName; mode:Mode; before?:string; guardVisible?:boolean; event?:'guard_max'|'guard_zero'|'transfer'; questionId?:string; segments?:{id:string;text:string;keywordId?:string}[] }
-export type StateKey='wall'|'bridge'|'punctuation'|'negation'|'door'|'seal'|'order'|'identity'|'memory';
-export const STATE_VALUES:Record<StateKey,readonly string[]>={wall:['solid','crossed'],bridge:['folded','open'],punctuation:['exclaim','question'],negation:['attached','detached'],door:['closed','waiting','open'],seal:['locked','broken'],order:['original','swapped'],identity:['sealed','resisting','unsealed','placed','rewritten'],memory:['unseen','seen']};
+export type StateKey='chapelPath'|'wall'|'bridge'|'punctuation'|'negation'|'door'|'seal'|'order'|'identity'|'memory';
+export const STATE_VALUES:Record<StateKey,readonly string[]>={chapelPath:['light','broken','stairs'],wall:['solid','crossed'],bridge:['folded','open'],punctuation:['exclaim','question'],negation:['attached','detached'],door:['closed','waiting','open'],seal:['locked','broken'],order:['original','swapped'],identity:['sealed','resisting','unsealed','placed','rewritten'],memory:['unseen','seen']};
 export interface RuleOption {id:string;label:string;text:string;value:string;resultId:string;keywordId?:string;delayMs?:number}
 export interface SentenceRule { id:string;objectId:string;title:string;kind:string;stateKey:StateKey;options:RuleOption[] }
 export interface TextObject {id:string;roomId:string;text:string;x:number;y:number;w:number;h:number;format:'bold'|'strike'|'underline'|'bracket'|'plain';stateKey?:StateKey}

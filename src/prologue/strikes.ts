@@ -1,3 +1,4 @@
+import type { ChapelState } from './chapel.ts';
 import raw from '../content/prologue/strikes.json' with { type: 'json' };
 import type { CorridorState } from './corridor.ts';
 import type { Point } from '../dungeon/model.ts';
@@ -18,7 +19,7 @@ for(const room of raw.rooms){
  check(ids.includes(room.id as InkRoom)&&point(room.anchor)&&room.reach>0,'room');
  check(Object.values(room.bounds).every(Number.isFinite)&&room.bounds.w>0&&room.bounds.h>0,'bounds');
  check(new Set(room.words.map(w=>w.id)).size===room.words.length&&room.words.length>0,'word IDs');
- for(const w of room.words){check(typeof w.text==='string'&&w.text.length>0&&[w.x,w.y,w.w,w.h].every(Number.isFinite)&&w.w>0&&w.h>0,'word');check(w.entity===null||['companion','self','memory','bridge','light','door','sun','doubt'].includes(w.entity),'entity');check(w.action===null||['blocks','supports','locks','serves','binds'].includes(w.action),'action');}
+ for(const w of room.words){check(typeof w.text==='string'&&w.text.length>0&&[w.x,w.y,w.w,w.h].every(Number.isFinite)&&w.w>0&&w.h>0,'word');check(w.entity===null||['companion','self','memory','bridge','light','door','sun','doubt','lie','power'].includes(w.entity),'entity');check(w.action===null||['blocks','supports','locks','serves','binds','prays'].includes(w.action),'action');}
  check(Object.values(room.reactions).every(v=>typeof v==='string'),'reactions');
  for(const c of room.connectors)check(typeof c.text==='string'&&Number.isFinite(c.x)&&Number.isFinite(c.y),'connector');
 }
@@ -52,14 +53,14 @@ export interface Realm {
  canceled:string[];lightOn:boolean;bridgePresent:boolean;bridgeSolid:boolean;doorPresent:boolean;doorLocked:boolean;wallSolid:boolean;
  selfPresent:boolean;companionPresent:boolean;faithIntact:boolean;bound:boolean;reaction:string;mood:'held'|'doubt'|'faded'|'released'|'rewritten';
 }
-export function readRealm(id:string,ink:InkStroke|null,identity='sealed'):Realm {
+export function readRealm(id:string,ink:InkStroke|null,identity='sealed',chapel?:ChapelState):Realm {
  const room=strikeRoom(id),canceled=room.words.filter(w=>wordCoverage(w,ink)==='full').map(w=>w.id);
  const exists=(entity:string)=>!room.words.some(w=>w.entity===entity&&canceled.includes(w.id));
  const works=(action:string)=>!room.words.some(w=>w.action===action&&canceled.includes(w.id));
- const lightOn=id!=='chapel'||exists('light'),bridgePresent=exists('bridge')&&(id!=='betrayal'||exists('memory'));
- const bridgeSolid=bridgePresent&&works('supports')&&lightOn;
+ const lightOn=id!=='chapel'||!chapel?.inserted&&exists('light'),bridgePresent=exists('bridge')&&(id!=='betrayal'||exists('memory'));
+ const bridgeSolid=bridgePresent&&works('supports')&&(id==='chapel'?lightOn||!!chapel?.inserted:lightOn);
  const selfPresent=exists('self'),companionPresent=exists('companion'),faithIntact=exists('sun')&&works('serves');
- const wallSolid=selfPresent&&companionPresent&&works('blocks'),doorPresent=exists('door'),doorLocked=doorPresent&&lightOn&&works('locks');
+ const wallSolid=selfPresent&&companionPresent&&works('blocks'),doorPresent=exists('door'),doorLocked=doorPresent&&lightOn&&works('locks')&&exists('lie');
  const bound=selfPresent&&exists('doubt')&&works('binds');
  let key='default',mood:Realm['mood']='held';
  if(!selfPresent){key='self';mood='faded';}
@@ -74,13 +75,13 @@ export function readRealm(id:string,ink:InkStroke|null,identity='sealed'):Realm 
  if(mood==='held'&&key!=='default')mood=key==='released'||key==='freed'?'released':'doubt';
  return {canceled,lightOn,bridgePresent,bridgeSolid,doorPresent,doorLocked,wallSolid,selfPresent,companionPresent,faithIntact,bound,reaction:room.reactions[key]??room.reactions.default,mood};
 }
-export function projectInk(ink:InkState,base:EnvironmentState,corridor?:CorridorState):EnvironmentState {
- const first=readRealm('betrayal',ink.betrayal),chapel=readRealm('chapel',ink.chapel);
- return {...base,wall:corridor?'crossed':first.wallSolid?'solid':'crossed',punctuation:'question',bridge:(corridor?!!corridor.bridgeWord:first.bridgeSolid)?'open':'folded',negation:'detached',door:chapel.doorLocked?'closed':'open'};
+export function projectInk(ink:InkState,base:EnvironmentState,corridor?:CorridorState,chapelState?:ChapelState):EnvironmentState {
+ const first=readRealm('betrayal',ink.betrayal),chapel=readRealm('chapel',ink.chapel,'sealed',chapelState);
+ return {...base,chapelPath:chapel.lightOn?'light':chapelState?.inserted&&chapel.bridgeSolid?'stairs':'broken',wall:corridor?'crossed':first.wallSolid?'solid':'crossed',punctuation:'question',bridge:(corridor?!!corridor.bridgeWord:first.bridgeSolid)?'open':'folded',negation:'detached',door:chapel.doorLocked?'closed':'open'};
 }
-export function roomEnvironment(id:string,ink:InkState,base:EnvironmentState,corridor?:CorridorState):EnvironmentState {
- const env=projectInk(ink,base,corridor);
- return id==='chapel'?{...env,bridge:readRealm(id,ink.chapel).bridgeSolid?'open':'folded'}:env;
+export function roomEnvironment(id:string,ink:InkState,base:EnvironmentState,corridor?:CorridorState,chapelState?:ChapelState):EnvironmentState {
+ const env=projectInk(ink,base,corridor,chapelState);
+ return id==='chapel'?{...env,bridge:readRealm(id,ink.chapel,'sealed',chapelState).bridgeSolid?'open':'folded'}:env;
 }
 export function canReachInk(id:string,p:Point):boolean {const room=strikeRoom(id);return !!room&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Math.hypot(p.x-room.anchor.x,p.y-room.anchor.y)<=room.reach;}
 /** Translate known previous puzzle outcomes into visible, editable strokes. */
